@@ -168,7 +168,7 @@
     --selection-foreground: oklch(20.5% 0 0);
 }
 
-aeris-bg3-rolls-react-root {
+draw-steel-rolls-react-root {
     position: absolute;
     top: 0;
     left: 0;
@@ -178,7 +178,7 @@ aeris-bg3-rolls-react-root {
     z-index: 100;
 }
 
-.aeris-bg3-rolls-react {
+.draw-steel-rolls-react {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -188,7 +188,7 @@ aeris-bg3-rolls-react-root {
     pointer-events: none;
 }
 
-.aeris-bg3-rolls-hidden {
+.draw-steel-rolls-hidden {
     display: none !important;
 }
 

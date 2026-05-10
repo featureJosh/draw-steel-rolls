@@ -17,11 +17,11 @@ function buildGroupContent(group) {
             let content = fs.readFileSync(filePath, "utf8").trim();
             content = content
                 .replace(
-                    /\]\(modules\/aeris-bg3-rolls\/examples\//g,
+                    /\]\(modules\/draw-steel-rolls\/examples\//g,
                     "](examples/"
                 )
                 .replace(
-                    /src=(["'])modules\/aeris-bg3-rolls\/examples\//g,
+                    /src=(["'])modules\/draw-steel-rolls\/examples\//g,
                     "src=$1examples/"
                 )
                 .replace(

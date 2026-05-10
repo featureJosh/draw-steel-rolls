@@ -7,7 +7,7 @@ stages:
     - pages
 
 variables:
-    PACKAGE_NAME: "aeris-bg3-rolls"
+    PACKAGE_NAME: "draw-steel-rolls"
     PACKAGE_VERSION: "$CI_COMMIT_TAG"
     DIST_PATH: "dist"
     MODULE_JSON_PATH: "$DIST_PATH/module.json"
@@ -85,15 +85,7 @@ deploy:
     script:
         - echo "Creating public directories..."
 
-        - mkdir -p public/v12 public/v13
-        - |
-            if [[ "$CI_COMMIT_TAG" =~ ^v13\. ]]; then
-                echo "Fetching v12 manifest to preserve..."
-                curl -sfL "https://aeris-fvtt.gitlab.io/aeris-bg3-rolls/v12/module.json" -o public/v12/module.json || true
-            else
-                echo "Fetching v13 manifest to preserve..."
-                curl -sfL "https://aeris-fvtt.gitlab.io/aeris-bg3-rolls/v13/module.json" -o public/v13/module.json || true
-            fi
+        - mkdir -p public/v14
 
         - echo "Installing unzip utility..."
         - apt-get update && apt-get install -y unzip
@@ -101,14 +93,8 @@ deploy:
         - echo "Unzipping dist and extracting module.json..."
         - unzip "${DIST_ZIP}" -d extracted
 
-        - |
-            if [[ "$CI_COMMIT_TAG" =~ ^v13\. ]]; then
-                echo "Publishing new v13 manifest..."
-                cp "extracted/module.json" public/v13/
-            else
-                echo "Publishing new v12 manifest..."
-                cp "extracted/module.json" public/v12
-            fi
+        - echo "Publishing new v14 manifest..."
+        - cp "extracted/module.json" public/v14/
         - echo "Contents of public/ directory:"
         - ls -Rla public/
     artifacts:
@@ -146,12 +132,7 @@ foundry-release:
             #!/bin/bash
             set -e
 
-            # Pick the correct manifest
-            if [[ "$CI_COMMIT_TAG" =~ ^v13\. ]]; then
-              MANIFEST_URL="https://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}/v13/module.json"
-            else
-              MANIFEST_URL="https://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}/v12/module.json"
-            fi
+            MANIFEST_URL="https://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}/v14/module.json"
 
             echo "Fetching release notes from GitLab Release..."
             NOTES="${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}"

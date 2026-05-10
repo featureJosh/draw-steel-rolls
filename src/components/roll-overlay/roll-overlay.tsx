@@ -1,4 +1,4 @@
-import { useRollStore } from "@/stores/group-roll-store";
+import { useRollOverlayStore } from "@/stores/roll-overlay-store";
 import React, { useEffect, useState } from "react";
 import { useGsapToggle } from "../../hooks/use-gsap-toggle";
 import { DiceCanvas } from "./dice-canvas";
@@ -6,8 +6,8 @@ import { RollOverlayInfo } from "./roll-overlay-info";
 import { RollOverlayPlayerRoll } from "./roll-overlay-player-roll";
 
 export const RollOverlay: React.FC = () => {
-    const current = useRollStore((s) => s.current);
-    const shouldShow = useRollStore((s) => s.shouldShow);
+    const current = useRollOverlayStore((s) => s.current);
+    const shouldShow = useRollOverlayStore((s) => s.shouldShow);
 
     const [phase, setPhase] = useState<"hidden" | "visible">("hidden");
 
@@ -61,24 +61,17 @@ export const RollOverlay: React.FC = () => {
             >
                 <div className="flex flex-col items-center justify-center text-center gap-[10px]">
                     <RollOverlayInfo data={current} ref={elementRef} />
-                    <div className="flex flex-row justify-center items-center">
-                        {current?.rolls?.map((rollData, index) => (
-                            <div
-                                key={`${current.id}.${rollData.actor.uuid}`}
-                                className="mx-[4px]"
-                            >
+                    {current && (
+                        <div className="flex flex-row justify-center items-center">
+                            <div className="mx-[4px]">
                                 <RollOverlayPlayerRoll
-                                    key={`${current.id}.${rollData.actor.uuid}`}
-                                    requestIndex={index}
-                                    actor={rollData.actor}
-                                    groupRollId={current.id}
-                                    advantageMode={rollData.advantageMode}
+                                    key={current.id}
+                                    data={current}
                                     isVisible={shouldShow}
-                                    rollData={rollData}
                                 />
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

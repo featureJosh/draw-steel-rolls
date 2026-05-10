@@ -1,11 +1,7 @@
 import { registerBorderColorSetting } from "./border-color";
-import { registerDebugMode } from "./debug-mode";
-import { registerDefaultImageMap } from "./default-image-map";
-import { registerGroupRollsStore } from "./group-rolls";
+import { registerOverlaySettings } from "./overlay";
 
 export function registerSettings() {
-    registerDebugMode();
-    registerDefaultImageMap();
-    registerGroupRollsStore();
+    registerOverlaySettings();
     registerBorderColorSetting();
 }

@@ -1,21 +1,21 @@
 import { diceBoxManager } from "@/managers/dice-box-manager";
-import { useRollStore } from "@/stores/group-roll-store";
+import { useRollOverlayStore } from "@/stores/roll-overlay-store";
 import { debug } from "@/utils/logging";
 import React, { forwardRef, useEffect, useRef } from "react";
 
-interface DiceCanvasProps extends React.HTMLAttributes<HTMLDivElement> {}
+type DiceCanvasProps = React.HTMLAttributes<HTMLDivElement>;
 
 export const DiceCanvas = forwardRef<HTMLDivElement, DiceCanvasProps>(
     ({ className, ...rest }, ref) => {
         const innerRef = useRef<HTMLDivElement>(null);
 
-        const isVisible = useRollStore((s) => s.canvasVisible);
+        const isVisible = useRollOverlayStore((s) => s.canvasVisible);
 
         useEffect(() => {
             debug("Mounting DiceCanvas...");
             if (innerRef.current) {
                 debug("Mounting DiceCanvas on:", innerRef.current);
-                diceBoxManager.init(innerRef.current);
+                void diceBoxManager.init(innerRef.current);
             }
         }, []);
 

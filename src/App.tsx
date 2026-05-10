@@ -3,7 +3,7 @@ import "./index.css";
 
 export const App = () => {
     return (
-        <div className="aeris-bg3-rolls-react tw">
+        <div className="draw-steel-rolls-react tw">
             <RollOverlay />
         </div>
     );

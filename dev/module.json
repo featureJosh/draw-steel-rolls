@@ -1,7 +1,7 @@
 {
-    "id": "aeris-bg3-rolls",
-    "title": "Aeris BG3 Rolls (Dev)",
-    "description": "Aeris BG3 Rolls HMR",
+    "id": "draw-steel-rolls",
+    "title": "Draw Steel Rolls (Dev)",
+    "description": "Draw Steel Rolls HMR",
     "version": "VERSION_TAG",
     "authors": [
         {
@@ -10,27 +10,15 @@
         }
     ],
     "esmodules": [
-        "http://localhost:30001/modules/aeris-bg3-rolls/src/index.js"
+        "http://localhost:30001/modules/draw-steel-rolls/src/index.js"
     ],
-    "socket": true,
+    "socket": false,
     "compatibility": {
-        "minimum": "13",
-        "verified": "13"
+        "minimum": "14.360",
+        "verified": "14"
     },
-    "manifest": "https://aeris-fvtt.gitlab.io/aeris-bg3-rolls/v13/module.json",
-    "download": "https://gitlab.com/api/v4/projects/69135573/packages/generic/aeris-bg3-rolls/VERSION_TAG/aeris-bg3-rolls-VERSION_TAG.zip",
     "relationships": {
         "requires": [
-            {
-                "id": "socketlib",
-                "type": "module",
-                "compatibility": {}
-            },
-            {
-                "id": "aeris-core",
-                "type": "module",
-                "compatibility": {}
-            },
             {
                 "id": "dice-so-nice",
                 "type": "module",
@@ -46,19 +34,12 @@
         ],
         "systems": [
             {
-                "id": "dnd5e",
+                "id": "draw-steel",
                 "type": "system",
-                "compatibility": {}
-            },
-            {
-                "id": "pf2e",
-                "type": "system",
-                "compatibility": {}
-            },
-            {
-                "id": "shadowdark",
-                "type": "system",
-                "compatibility": {}
+                "compatibility": {
+                    "minimum": "1.0.0",
+                    "verified": "1.0.2"
+                }
             }
         ]
     }

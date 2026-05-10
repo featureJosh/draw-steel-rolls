@@ -86,7 +86,6 @@ export const faceQuats = {
 };
 
 export function getDice3d() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (game as any)?.dice3d as Dice3D;
 }
 

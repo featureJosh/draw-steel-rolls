@@ -5,23 +5,8 @@
             "children": [
                 {
                     "id": "intro",
-                    "title": "Aeris BG3 Rolls",
+                    "title": "Draw Steel Rolls",
                     "file": "getting-started/intro.md"
-                }
-            ]
-        },
-        {
-            "label": "API Reference",
-            "children": [
-                {
-                    "id": "open-group-roll-manager",
-                    "title": "aerisBg3Rolls.openGroupRollManager",
-                    "file": "api/open-group-roll-manager.md"
-                },
-                {
-                    "id": "register-docs-menu",
-                    "title": "aerisBg3Rolls.requestGroupRoll",
-                    "file": "api/request-group-roll.md"
                 }
             ]
         }

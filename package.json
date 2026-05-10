@@ -1,11 +1,11 @@
 {
-    "name": "aeris-bg3-rolls",
+    "name": "draw-steel-rolls",
     "version": "1.0.0",
     "main": "src/index.ts",
     "type": "module",
     "sideEffects": false,
     "scripts": {
-        "lint": "eslint . --ext .ts,.js",
+        "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
         "type-check": "tsc --noEmit",
         "ci": "vite build && node scripts/inject-id.js",
         "update-readme": "node scripts/update-readme.js",
@@ -59,6 +59,7 @@
         "eslint": "^9.34.0",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^5.2.0",
+        "eslint-plugin-react-refresh": "^0.5.2",
         "fvtt-types": "github:League-of-Foundry-Developers/foundry-vtt-types#main",
         "globals": "^16.3.0",
         "sass": "^1.90.0",

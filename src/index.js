@@ -1,4 +1,4 @@
-import "http://localhost:30001/modules/aeris-bg3-rolls/@vite/client";
+import "http://localhost:30001/modules/draw-steel-rolls/@vite/client";
 
 import RefreshRuntime from "/@react-refresh";
 RefreshRuntime.injectIntoGlobalHook(window);
@@ -7,4 +7,4 @@ window.$RefreshSig$ = () => (type) => type;
 window.__vite_plugin_react_preamble_installed__ = true;
 
 window.global = window; // some libs need this
-import("http://localhost:30001/modules/aeris-bg3-rolls/src/main.tsx");
+import("http://localhost:30001/modules/draw-steel-rolls/src/main.tsx");

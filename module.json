@@ -1,35 +1,24 @@
 {
-    "id": "aeris-bg3-rolls",
-    "name": "aeris-bg3-rolls",
-    "title": "Aeris BG3 Rolls",
-    "description": "Adds a BG3 inspired roll overlay.",
+    "id": "draw-steel-rolls",
+    "name": "draw-steel-rolls",
+    "title": "Draw Steel Rolls",
+    "description": "Adds a cinematic overlay for native Draw Steel test rolls.",
     "version": "VERSION_TAG",
     "authors": [
         {
-            "name": "Robin Chand",
-            "discord": "robxnlifts"
+            "name": "Josh",
+            "discord": "featureJosh"
         }
     ],
     "esmodules": ["main.bundle.js"],
-    "socket": true,
+    "styles": ["assets/main.css"],
+    "socket": false,
     "compatibility": {
-        "minimum": "13",
-        "verified": "13"
+        "minimum": "14.360",
+        "verified": "14"
     },
-    "manifest": "https://aeris-fvtt.gitlab.io/aeris-bg3-rolls/v13/module.json",
-    "download": "https://gitlab.com/api/v4/projects/69135573/packages/generic/aeris-bg3-rolls/VERSION_TAG/aeris-bg3-rolls-VERSION_TAG.zip",
     "relationships": {
         "requires": [
-            {
-                "id": "socketlib",
-                "type": "module",
-                "compatibility": {}
-            },
-            {
-                "id": "aeris-core",
-                "type": "module",
-                "compatibility": {}
-            },
             {
                 "id": "dice-so-nice",
                 "type": "module",
@@ -45,19 +34,12 @@
         ],
         "systems": [
             {
-                "id": "dnd5e",
+                "id": "draw-steel",
                 "type": "system",
-                "compatibility": {}
-            },
-            {
-                "id": "pf2e",
-                "type": "system",
-                "compatibility": {}
-            },
-            {
-                "id": "shadowdark",
-                "type": "system",
-                "compatibility": {}
+                "compatibility": {
+                    "minimum": "1.0.0",
+                    "verified": "1.0.2"
+                }
             }
         ]
     }

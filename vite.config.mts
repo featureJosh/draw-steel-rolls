@@ -35,13 +35,13 @@ export default defineConfig(({ mode }) => {
             }),
         ],
 
-        base: isDev ? `/modules/aeris-bg3-rolls` : "./",
+        base: isDev ? `/modules/draw-steel-rolls` : "./",
 
         server: isDev
             ? {
                   port: 30001,
                   proxy: {
-                      [`^/(?!modules/aeris-bg3-rolls)`]:
+                      [`^/(?!modules/draw-steel-rolls)`]:
                           "http://localhost:30000",
                       "/socket.io": {
                           target: "ws://localhost:30000",

@@ -1,3 +1,4 @@
+import { MODULE_ID } from "@/config/constants";
 import { ComponentProps, FC, useEffect, useRef, useState } from "react";
 
 interface LazySvgProps extends ComponentProps<"svg"> {
@@ -14,7 +15,7 @@ const useLazySvgImport = (name: string) => {
         const importIcon = async () => {
             try {
                 const module = await import(
-                    `/modules/aeris-bg3-rolls/assets/${name}.svg`
+                    `/modules/${MODULE_ID}/assets/${name}.svg`
                 );
                 importRef.current = module.default;
             } catch (err) {

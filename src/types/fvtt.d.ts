@@ -1,9 +1,9 @@
 declare module "fvtt-types/configuration" {
     interface SettingConfig {
-        "aeris-bg3-rolls.debugMode": boolean;
-        "aeris-bg3-rolls.imageOverrides": Record<string, string>;
-        "aeris-bg3-rolls.groupRolls": object;
-        "aeris-bg3-rolls.border-color": string | undefined;
+        "draw-steel-rolls.overlayEnabled": boolean;
+        "draw-steel-rolls.background": string;
+        "draw-steel-rolls.displayDurationMs": number;
+        "draw-steel-rolls.border-color": string | undefined;
     }
 
     namespace Hooks {
@@ -16,16 +16,9 @@ declare module "fvtt-types/configuration" {
                 chatMessageId: string,
                 config: { willTrigger3DRoll: boolean }
             ) => void;
-            setRollForEveryone: (
-                data: Serialized<SetRollForEveryoneArgs>
+            "draw-steel-rolls.border-color": (
+                value: string | undefined
             ) => void;
-            triggerRollForActor: (data: {
-                groupRollId: GroupRollId;
-                actorUuid: ActorUuid;
-            }) => void;
-            showGroupRollRequest: (data: InitiatedGroupRoll) => void;
-            hideGroupRollRequest: () => void;
-            "aeris-bg3-rolls.border-color": (value: string | undefined) => void;
         }
     }
 }

@@ -1,35 +1,62 @@
+import { MODULE_ID } from "@/config/constants";
 import { useHookEvent } from "@/hooks/use-hook-event";
+import { DrawSteelRollOverlayData } from "@/stores/roll-overlay-store";
 import { forwardRef, useMemo, useState } from "react";
 import { RollOverlayBg } from "../svg/roll-overlay-bg";
 
 interface Props {
-    data: InitiatedGroupRoll | null;
+    data: DrawSteelRollOverlayData | null;
 }
 
 export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
     ({ data }, ref) => {
         const [color, setColor] = useState<string | undefined>(
-            game.settings.get(`aeris-bg3-rolls`, `border-color`) ?? "#ffffff"
+            game.settings!.get(MODULE_ID, "border-color") ?? "#ffffff"
         );
 
-        useHookEvent(`aeris-bg3-rolls.border-color`, (value) => {
+        useHookEvent(`${MODULE_ID}.border-color`, (value) => {
             if (value) setColor(value);
         });
 
         const prompt = useMemo(() => {
-            if (!data)
-                return { img: "", text: "", type: "", difficulty: "", dc: "" };
+            if (!data) {
+                return {
+                    img: "",
+                    text: "",
+                    type: "",
+                    tier: "",
+                    total: "",
+                    natural: "",
+                };
+            }
+
+            const tier = data.product
+                ? `${data.isCritical ? "Critical " : ""}Tier ${data.product}`
+                : "";
+            const natural =
+                data.modifier === 0
+                    ? `Natural ${data.naturalResult}`
+                    : `Natural ${data.naturalResult} ${data.modifier > 0 ? "+" : ""}${data.modifier}`;
 
             return {
-                img: data.img || "",
-                text: data.promptHeader || "Group Roll",
-                type: data.promptSubheader || "",
-                difficulty: data.targetValue ? "DIFFICULTY CLASS" : "",
-                dc: String(data.targetValue || ""),
+                img: data.background,
+                text: data.title || "Draw Steel Test",
+                type: data.flavor || data.actorName,
+                tier,
+                total: String(data.total),
+                natural,
             };
         }, [data]);
 
         const isVideo = MEDIA_VIDEO_REGEX.test(prompt.img);
+        const maskStyle = {
+            maskImage: `url('/modules/${MODULE_ID}/assets/roll-overlay-mask.svg')`,
+            maskRepeat: "no-repeat",
+            maskPosition: "center",
+            WebkitMaskImage: `url('/modules/${MODULE_ID}/assets/roll-overlay-mask.svg')`,
+            WebkitMaskRepeat: "no-repeat",
+            WebkitMaskPosition: "center",
+        };
 
         return (
             <div
@@ -39,7 +66,8 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
                 {prompt.img &&
                     (isVideo ? (
                         <video
-                            className="absolute z-10 opacity-60 w-[352px] h-[395px] object-cover [mask-image:url('/modules/aeris-bg3-rolls/assets/roll-overlay-mask.svg')] [mask-repeat:no-repeat] [mask-position:center]"
+                            className="absolute z-10 opacity-60 w-[352px] h-[395px] object-cover"
+                            style={maskStyle}
                             src={prompt.img}
                             autoPlay
                             loop
@@ -48,23 +76,27 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
                         />
                     ) : (
                         <img
-                            className="absolute z-10 opacity-60 w-[352px] h-[395px] object-cover [mask-image:url('/modules/aeris-bg3-rolls/assets/roll-overlay-mask.svg')] [mask-repeat:no-repeat] [mask-position:center]"
+                            className="absolute z-10 opacity-60 w-[352px] h-[395px] object-cover"
+                            style={maskStyle}
                             src={prompt.img}
                             alt=""
                         />
                     ))}
                 <div className="absolute text-white z-[11] h-[300px] w-[300px]">
-                    <div className="w-[200px] absolute font-bold text-[40px] left-1/2 top-[90px] -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-[220px] absolute font-bold text-[32px] left-1/2 top-[78px] -translate-x-1/2 -translate-y-1/2 leading-none">
                         {prompt.text}
                     </div>
-                    <div className="w-[200px] absolute font-semibold text-[32px] left-1/2 top-[188px] -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-[220px] absolute font-semibold text-[22px] left-1/2 top-[156px] -translate-x-1/2 -translate-y-1/2 leading-tight">
                         {prompt.type}
                     </div>
-                    <div className="w-[200px] absolute font-semibold text-[15px] left-1/2 top-[257px] -translate-x-1/2 -translate-y-1/2">
-                        {prompt.difficulty}
+                    <div className="w-[200px] absolute font-semibold text-[18px] left-1/2 top-[222px] -translate-x-1/2 -translate-y-1/2">
+                        {prompt.tier}
                     </div>
-                    <div className="absolute font-medium text-[36px] left-1/2 top-[300px] -translate-x-1/2 -translate-y-1/2">
-                        {prompt.dc}
+                    <div className="absolute font-black text-[48px] left-1/2 top-[278px] -translate-x-1/2 -translate-y-1/2">
+                        {prompt.total}
+                    </div>
+                    <div className="w-[200px] absolute font-semibold text-[14px] left-1/2 top-[322px] -translate-x-1/2 -translate-y-1/2 opacity-85">
+                        {prompt.natural}
                     </div>
                 </div>
 
@@ -78,5 +110,7 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
         );
     }
 );
+
+RollOverlayInfo.displayName = "RollOverlayInfo";
 
 const MEDIA_VIDEO_REGEX = /\.(mp4|webm|ogg)$/i;

@@ -19,7 +19,7 @@ class DiceBoxManager {
 
         const DiceBoxCtor = getDice3d().box.constructor;
         const DiceFactoryCtor = getDice3d().box.dicefactory.constructor;
-        //@ts-expect-error
+        // @ts-expect-error Dice So Nice does not publish constructor types for its internal factory.
         this.factory = new DiceFactoryCtor();
 
         const config = foundry.utils.deepClone(getDice3d().box.config);
@@ -27,7 +27,7 @@ class DiceBoxManager {
         config.autoscale = false;
         config.boxType = "shared-dice-box";
 
-        //@ts-expect-error
+        // @ts-expect-error Dice So Nice does not publish constructor types for its internal dice box.
         this.box = new DiceBoxCtor(
             canvasContainer,
             this.factory,
@@ -56,7 +56,7 @@ class DiceBoxManager {
 
     async spawnDie(
         id: string,
-        type: keyof typeof faceQuats,
+        type: string,
         user: User,
         pos: { x: number; y: number }
     ) {
@@ -81,7 +81,11 @@ class DiceBoxManager {
             }
 
             dicemesh.notation = { type };
-            dicemesh.quaternion.copy(getFaceQuaternion(type, 1));
+            if (type in faceQuats) {
+                dicemesh.quaternion.copy(
+                    getFaceQuaternion(type as keyof typeof faceQuats, 1)
+                );
+            }
             dicemesh.result = 1;
             dicemesh.position.set(pos.x, pos.y, 0);
 
@@ -180,7 +184,7 @@ export const diceBoxManager = DiceBoxManager.instance;
 
 export function getAppearance(
     user: User,
-    type: keyof typeof faceQuats,
+    type: string,
     factory: DiceFactory
 ) {
     const dsnConfig = (

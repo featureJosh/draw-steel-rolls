@@ -1,27 +1,23 @@
 import js from "@eslint/js";
-import * as importX from "eslint-plugin-import-x";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default [
-    js.configs.recommended,
-    ...tseslint.configs.recommendedTypeChecked,
-    importX.flatConfigs.recommended, // use import-x instead of import
     {
-        files: ["**/*.{ts,tsx,js,jsx}"],
-        ignores: ["dist", "node_modules"],
+        ignores: ["dist/**", "node_modules/**", "src/types/**/*.d.ts"],
+    },
+    js.configs.recommended,
+    ...tseslint.configs.recommended,
+    {
+        files: ["src/**/*.{ts,tsx,js,jsx}"],
         languageOptions: {
             ecmaVersion: 2023,
-            parserOptions: {
-                projectService: true,
-                tsconfigRootDir: import.meta.dirname,
-            },
+            sourceType: "module",
             globals: {
-                window: "readonly",
-                document: "readonly",
-                navigator: "readonly",
+                ...globals.browser,
             },
         },
         plugins: {
@@ -32,14 +28,19 @@ export default [
         rules: {
             ...react.configs.recommended.rules,
             ...reactHooks.configs.recommended.rules,
-            "react-refresh/only-export-components": [
-                "warn",
-                { allowConstantExport: true },
+            "react-refresh/only-export-components": "off",
+            "react-hooks/exhaustive-deps": "off",
+            "react/react-in-jsx-scope": "off",
+            "react/prop-types": "off",
+            "no-undef": "off",
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
             ],
         },
         settings: {
             react: { version: "detect" },
-            "import-x/resolver": "typescript",
         },
     },
 ];

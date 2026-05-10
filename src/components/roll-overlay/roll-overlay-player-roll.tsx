@@ -1,72 +1,53 @@
+import { MODULE_ID } from "@/config/constants";
 import { useDiceAnimation2 } from "@/hooks/use-dice-anim-2";
 import { useGsapToggle } from "@/hooks/use-gsap-toggle";
 import { useHookEvent } from "@/hooks/use-hook-event";
 import { cn } from "@/lib/utils";
 import { diceBoxManager } from "@/managers/dice-box-manager";
-import { useRollStore } from "@/stores/group-roll-store";
+import {
+    DrawSteelRollOverlayData,
+    useRollOverlayStore,
+} from "@/stores/roll-overlay-store";
 import { getDiceOffsetCoordinates } from "@/utils/dice-offset-coordinates";
-import { getModifierFromRoll } from "@/utils/get-modifier-from-roll";
 import gsap from "gsap";
 import React, {
-    useCallback,
     useEffect,
-    useMemo,
     useRef,
     useState,
 } from "react";
 import { Material } from "three";
-import { socketlibSocket } from "../../socket/_socket";
 import { PlayerRollBorder } from "../svg/player-roll-border";
-import { AdvIcons } from "./adv-icons";
 
 interface RollOverlayPlayerRollProps {
-    requestIndex: number;
-    groupRollId: GroupRollId;
-    actor: Actor;
-    advantageMode: number;
+    data: DrawSteelRollOverlayData;
     isVisible: boolean;
-    rollData: InitiatedIndividualRollRequest;
 }
 
 const EMPTY_ARRAY: string[] = [];
 
 export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
-    groupRollId,
-    actor,
-    advantageMode,
+    data,
     isVisible,
-    requestIndex,
-    rollData,
 }) => {
     const [color, setColor] = useState<string | undefined>(
-        game.settings.get(`aeris-bg3-rolls`, `border-color`) ?? "#ffffff"
+        game.settings!.get(MODULE_ID, "border-color") ?? "#ffffff"
     );
 
-    useHookEvent(`aeris-bg3-rolls.border-color`, (value) => {
+    useHookEvent(`${MODULE_ID}.border-color`, (value) => {
         if (value) setColor(value);
     });
 
-    const modifier = useMemo(
-        () => getModifierFromRoll(rollData.roll),
-        [rollData]
-    );
+    const modifier = data.modifier;
 
-    const diceIds = useRollStore(
-        (s) => s.diceIdsByActor[actor.uuid as ActorUuid] ?? EMPTY_ARRAY
-    );
-    const rollResult = useRollStore(
-        (s) => s.results[actor.uuid as ActorUuid] ?? null
-    );
+    const diceIds = useRollOverlayStore((s) => s.diceIds ?? EMPTY_ARRAY);
 
-    const hideCanvas = useRollStore((s) => s.hideCanvas);
-
-    const numberOfDie = 1 + Math.abs(Number(advantageMode));
+    const hideCanvas = useRollOverlayStore((s) => s.hideCanvas);
 
     const modifierRef = useRef<HTMLDivElement>(null);
 
     const { elementRef, show, hide } = useGsapToggle({
         from: { duration: 0.75, y: 50, opacity: 0, ease: "expo.out" },
-        to: { duration: 0.75, y: 0, opacity: 1, delay: requestIndex * 0.2 },
+        to: { duration: 0.75, y: 0, opacity: 1 },
         onHidden: () => {
             hideCanvas();
         },
@@ -121,46 +102,34 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
         else hide();
     }, [isVisible, show, hide]);
 
-    const handleRollClick = useCallback(async () => {
-        if (!actor || !actor.isOwner) return;
-        socketlibSocket.executeAsGM("handleTriggerRollForActor", {
-            groupRollId,
-            actorUuid: actor.uuid as ActorUuid,
-        });
-    }, [groupRollId, actor]);
-
-    const configs = useMemo(() => {
-        return Array.from({ length: numberOfDie }).map((_, index) => {
-            return {
-                id: diceIds[index],
-                result: rollResult?.result[index] ?? 0,
-                modified: rollResult?.modified[index] ?? 0,
-            };
-        });
-    }, [diceIds, rollResult, numberOfDie]);
-
     useDiceAnimation2(
         diceIds,
-        rollResult?.maxIndex ?? null,
-        numberOfDie,
-        groupRollId,
-        actor,
-        configs,
+        data.dice,
+        data.id,
         modifierRef
     );
+
+    const actorMaskStyle = {
+        maskImage: `url('/modules/${MODULE_ID}/assets/player-roll-border-mask.svg')`,
+        maskRepeat: "no-repeat",
+        maskPosition: "center",
+        WebkitMaskImage: `url('/modules/${MODULE_ID}/assets/player-roll-border-mask.svg')`,
+        WebkitMaskRepeat: "no-repeat",
+        WebkitMaskPosition: "center",
+    };
 
     return (
         <>
             <div
                 className="flex items-center justify-center relative w-[120px] h-[120px] pointer-events-auto"
-                onClick={handleRollClick}
             >
                 <div ref={elementRef}>
-                    <AdvIcons advantageMode={advantageMode} />
-                    {actor.img && (
+                    <BoonLabel netBoon={data.netBoon} />
+                    {data.actorImg && (
                         <img
-                            className="absolute object-cover opacity-60 z-10 [mask-image:url('/modules/aeris-bg3-rolls/assets/player-roll-border-mask.svg')] [mask-repeat:no-repeat] [mask-position:center]"
-                            src={actor.img}
+                            className="absolute object-cover opacity-60 z-10"
+                            style={actorMaskStyle}
+                            src={data.actorImg}
                         />
                     )}
                     <PlayerRollBorder className="opacity-80" color={color} />
@@ -175,10 +144,36 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                         </div>
                     )}
                     <div className="absolute left-1/2 top-[115px] -translate-x-1/2 -translate-y-1/2 text-[15px] font-bold text-center text-white z-[12]">
-                        {actor.name?.split(" ")[0] ?? ""}
+                        {data.actorName?.split(" ")[0] ?? ""}
+                    </div>
+                    <div className="absolute left-1/2 top-[138px] -translate-x-1/2 flex gap-1 z-[13]">
+                        {data.dice.map((die, index) => (
+                            <div
+                                key={`${data.id}-die-${index}`}
+                                className={cn(
+                                    "h-6 min-w-6 px-1 rounded-sm border border-white/40 bg-black/70 text-xs font-black flex items-center justify-center",
+                                    !die.active && "opacity-45 line-through"
+                                )}
+                            >
+                                {die.value}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
         </>
+    );
+};
+
+const BoonLabel: React.FC<{ netBoon: number }> = ({ netBoon }) => {
+    if (!netBoon) return null;
+
+    const count = Math.abs(netBoon);
+    const label = netBoon > 0 ? (count === 1 ? "Edge" : "Edges") : count === 1 ? "Bane" : "Banes";
+
+    return (
+        <div className="absolute left-1/2 top-[-8px] -translate-x-1/2 z-[14] rounded-sm border border-white/30 bg-black/70 px-1.5 py-0.5 text-[11px] font-black uppercase tracking-normal">
+            {count} {label}
+        </div>
     );
 };

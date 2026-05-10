@@ -13,6 +13,15 @@ const foundryModules =
               "Data",
               "modules"
           )
+        : process.platform === "darwin"
+          ? join(
+                os.homedir(),
+                "Library",
+                "Application Support",
+                "FoundryVTT",
+                "Data",
+                "modules"
+            )
         : join(
               os.homedir(),
               ".local",
@@ -22,7 +31,7 @@ const foundryModules =
               "modules"
           ));
 
-const moduleName = "aeris-bg3-rolls";
+const moduleName = "draw-steel-rolls";
 const modulePath = join(foundryModules, moduleName);
 
 async function main() {

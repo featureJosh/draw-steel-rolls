@@ -11,9 +11,9 @@ dev/icons
 dev/docs
 .*
 *.md
-!.gitignore
-!.gitattributes
-!.gitlab-ci.yml
+.gitattributes
+.gitlab-ci.yml
 !.github/
 !.github/**
 !RELEASE.md
+graphify-out/

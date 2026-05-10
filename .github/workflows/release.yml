@@ -1,0 +1,79 @@
+# Barebones analogue to aeris-bg3-rolls GitLab tag pipeline:
+# tag push → install → lint/typecheck → build → stamp version → zip dist → GitHub Release.
+# Optional: changelog section "## vX.Y.Z" in CHANGELOG.md becomes release notes.
+name: Release
+
+on:
+    push:
+        tags:
+            - "v*.*.*"
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 11.0.9
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Type check
+              run: pnpm type-check
+
+            - name: Lint
+              run: pnpm lint
+
+            - name: Production build
+              run: pnpm run ci
+
+            - name: Set manifest version from tag
+              env:
+                  TAG_NAME: ${{ github.ref_name }}
+              run: |
+                  set -euo pipefail
+                  VERSION="${TAG_NAME#v}"
+                  jq --arg ver "$VERSION" '.version = $ver' dist/module.json > dist/module.json.tmp
+                  mv dist/module.json.tmp dist/module.json
+
+            - name: Publish GitHub Release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  TAG_NAME: ${{ github.ref_name }}
+              run: |
+                  set -euo pipefail
+                  MODULE_ID="$(jq -r .id dist/module.json)"
+                  ZIP_NAME="${MODULE_ID}-${TAG_NAME}.zip"
+                  NOTES="${RUNNER_TEMP}/release-notes.md"
+                  CLIP="${RUNNER_TEMP}/changelog-snippet.md"
+
+                  (cd dist && zip -rq "../${ZIP_NAME}" .)
+
+                  TAG_HEADING="## ${TAG_NAME}"
+                  if [ -f CHANGELOG.md ]; then
+                    awk -v h="$TAG_HEADING" '$0 == h {f=1; next} /^## / && f {exit} f' CHANGELOG.md > "${CLIP}"
+                  fi
+                  if [ -f "${CLIP:-}" ] && [ -s "${CLIP}" ]; then
+                    mv "${CLIP}" "${NOTES}"
+                  else
+                    rm -f "${CLIP:-}"
+                    printf 'Release `%s`.\n' "${TAG_NAME}" > "${NOTES}"
+                  fi
+
+                  gh release create "${TAG_NAME}" "${ZIP_NAME}" "dist/module.json#module.json" \
+                    --title "Release ${TAG_NAME}" \
+                    --notes-file "${NOTES}"

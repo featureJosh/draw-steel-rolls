@@ -1,6 +1,7 @@
 import { MODULE_ID } from "@/config/constants";
 
 export const DEFAULT_BACKGROUND = `/modules/${MODULE_ID}/assets/roll_bg_2.webm`;
+export const MIN_OVERLAY_DURATION_MS = 3500;
 
 export function registerOverlaySettings() {
     game.settings!.register(MODULE_ID, "overlayEnabled", {
@@ -29,7 +30,7 @@ export function registerOverlaySettings() {
         type: Number,
         default: 6000,
         range: {
-            min: 2500,
+            min: MIN_OVERLAY_DURATION_MS,
             max: 15000,
             step: 500,
         },
@@ -46,5 +47,6 @@ export function getOverlayBackground(): string {
 
 export function getOverlayDisplayDuration(): number {
     const value = Number(game.settings!.get(MODULE_ID, "displayDurationMs"));
-    return Number.isFinite(value) ? value : 6000;
+    if (!Number.isFinite(value)) return 6000;
+    return Math.max(value, MIN_OVERLAY_DURATION_MS);
 }

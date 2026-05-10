@@ -1,8 +1,9 @@
 import { diceBoxManager } from "@/managers/dice-box-manager";
 import { DrawSteelRollDieView } from "@/stores/roll-overlay-store";
+import { rotateToResult } from "@/utils/dsn";
 import gsap from "gsap";
 import { useEffect } from "react";
-import { Material, Quaternion, Vector3 } from "three";
+import { Material } from "three";
 
 export const useDiceAnimation2 = (
     diceIds: string[],
@@ -14,23 +15,14 @@ export const useDiceAnimation2 = (
         const id = `dice-animation-${rollId}`;
         if (!diceIds.length) return;
 
-        const baseQuaternions = new Map<string, Quaternion>();
-
         const timeline = gsap.timeline({
             onStart: () => {
                 diceBoxManager.startAnimating(id);
-                diceIds.forEach((dieId) => {
-                    const mesh = diceBoxManager.getDie(dieId);
-                    if (mesh) baseQuaternions.set(dieId, mesh.quaternion.clone());
-                });
             },
             onComplete: () => diceBoxManager.stopAnimating(id),
             onInterrupt: () => diceBoxManager.stopAnimating(id),
         });
         gsap.ticker.fps(60);
-
-        const wiggleQuaternion = new Quaternion();
-        const tmpVector = new Vector3(0, 0, 1);
 
         diceIds.forEach((dieId, index) => {
             const mesh = diceBoxManager.getDie(dieId);
@@ -67,21 +59,12 @@ export const useDiceAnimation2 = (
                 "<"
             );
 
-            timeline.to(
-                { wiggleT: 0 },
-                {
-                    wiggleT: 1,
-                    duration: 0.55,
-                    ease: "power2.inOut",
-                    onUpdate: function () {
-                        const baseQuaternion = baseQuaternions.get(dieId);
-                        if (!baseQuaternion) return;
-                        const t = this.targets()[0].wiggleT;
-                        const wiggleAngle = Math.sin(t * Math.PI * 4) * 0.16;
-                        wiggleQuaternion.setFromAxisAngle(tmpVector, wiggleAngle);
-                        mesh.quaternion.copy(wiggleQuaternion).multiply(baseQuaternion);
-                    },
+            timeline.call(
+                () => {
+                    const value = dice[index]?.value;
+                    if (value) void rotateToResult(mesh, value);
                 },
+                undefined,
                 "<"
             );
         });

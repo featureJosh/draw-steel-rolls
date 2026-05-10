@@ -71,13 +71,42 @@ export const useRollOverlayStore = create<RollOverlayState>((set) => ({
     hideCanvas: () => set({ canvasVisible: false }),
 }));
 
-let hideTimer: number | undefined;
-let clearTimer: number | undefined;
+type QueuedRoll = {
+    data: Omit<DrawSteelRollOverlayData, "background">;
+    resolve: () => void;
+    reject: (error: unknown) => void;
+};
+
+const overlayQueue: QueuedRoll[] = [];
+let isDrainingQueue = false;
 
 export async function showRollOverlay(data: Omit<DrawSteelRollOverlayData, "background">) {
-    window.clearTimeout(hideTimer);
-    window.clearTimeout(clearTimer);
+    return new Promise<void>((resolve, reject) => {
+        overlayQueue.push({ data, resolve, reject });
+        void drainOverlayQueue();
+    });
+}
 
+async function drainOverlayQueue() {
+    if (isDrainingQueue) return;
+    isDrainingQueue = true;
+
+    while (overlayQueue.length) {
+        const item = overlayQueue.shift();
+        if (!item) continue;
+
+        try {
+            await playRollOverlay(item.data);
+            item.resolve();
+        } catch (error) {
+            item.reject(error);
+        }
+    }
+
+    isDrainingQueue = false;
+}
+
+async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background">) {
     const state = useRollOverlayStore.getState();
     await Promise.all(state.diceIds.map((id) => diceBoxManager.removeDie(id)));
 
@@ -89,10 +118,12 @@ export async function showRollOverlay(data: Omit<DrawSteelRollOverlayData, "back
         data.dice.map(async (die, index) => {
             const id = `${data.id}-${index}-${foundry.utils.randomID()}`;
             const { top, left } = getDiceOffsetCoordinates(index, data.dice.length);
-            const mesh = await diceBoxManager.spawnDie(id, "d10", data.user, {
-                x: offsets[index] + left * 2,
-                y: baseY + top * 2,
-            });
+            const mesh = await diceBoxManager
+                .spawnDie(id, "d10", data.user, {
+                    x: offsets[index] + left * 2,
+                    y: baseY + top * 2,
+                })
+                .catch(() => undefined);
 
             if (!mesh) return;
             mesh.result = die.value;
@@ -113,15 +144,15 @@ export async function showRollOverlay(data: Omit<DrawSteelRollOverlayData, "back
         diceIds
     );
 
-    hideTimer = window.setTimeout(() => {
-        useRollOverlayStore.getState().hide();
-    }, getOverlayDisplayDuration());
+    const displayDuration = getOverlayDisplayDuration();
+    await sleep(displayDuration);
 
-    clearTimer = window.setTimeout(() => {
-        const ids = useRollOverlayStore.getState().diceIds;
-        ids.forEach((id) => void diceBoxManager.removeDie(id));
-        useRollOverlayStore.getState().clear();
-    }, getOverlayDisplayDuration() + 1000);
+    useRollOverlayStore.getState().hide();
+    await sleep(1000);
+
+    const ids = useRollOverlayStore.getState().diceIds;
+    await Promise.all(ids.map((id) => diceBoxManager.removeDie(id)));
+    useRollOverlayStore.getState().clear();
 }
 
 function getDieOffsets(n: number): number[] {
@@ -146,4 +177,8 @@ function setMaterialOpacity(material: Material | Material[], opacity: number) {
             transparentMat.opacity = opacity;
         }
     });
+}
+
+function sleep(ms: number) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
 }

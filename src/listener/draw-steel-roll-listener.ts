@@ -6,6 +6,7 @@ import {
 import { warn } from "@/utils/logging";
 
 const animatedRolls = new Set<string>();
+const MAX_ANIMATED_ROLL_KEYS = 500;
 
 export function setupDrawSteelRollListener() {
     if (game.system?.id !== "draw-steel") {
@@ -28,11 +29,14 @@ async function handleChatMessage(message: ChatMessage) {
     const data = extractNativeTestRoll(message);
     if (!data) return;
 
-    await showRollOverlay(data);
+    try {
+        await showRollOverlay(data);
+    } catch (error) {
+        warn("Failed to show Draw Steel roll overlay", error);
+    }
 }
 
 function extractNativeTestRoll(message: ChatMessage) {
-    if (game.system?.id !== "draw-steel") return null;
     if (!message.isContentVisible) return null;
     if ((message as any).blind && !game.user?.isGM) return null;
     if ((message as any).type !== "standard") return null;
@@ -51,8 +55,8 @@ function extractNativeTestRoll(message: ChatMessage) {
             if (animatedRolls.has(key)) continue;
 
             const dice = getDice(roll);
-            if (!dice.length) return null;
-            animatedRolls.add(key);
+            if (!dice.length) continue;
+            rememberAnimatedRoll(key);
 
             const actor = getSpeakerActor(message);
             const naturalResult =
@@ -65,7 +69,7 @@ function extractNativeTestRoll(message: ChatMessage) {
                 messageId: message.id ?? message.uuid ?? key,
                 partId,
                 rollIndex,
-                title: String((message as any).title ?? "Draw Steel Test"),
+                title: getRollTitle(message, part, roll),
                 flavor: String(part.flavor ?? (roll as any).options?.flavor ?? ""),
                 actorName: actor?.name ?? message.alias ?? "Unknown",
                 actorImg: actor?.img ? String(actor.img) : undefined,
@@ -84,6 +88,16 @@ function extractNativeTestRoll(message: ChatMessage) {
     }
 
     return null;
+}
+
+function rememberAnimatedRoll(key: string) {
+    animatedRolls.add(key);
+
+    while (animatedRolls.size > MAX_ANIMATED_ROLL_KEYS) {
+        const firstKey = animatedRolls.values().next().value as string | undefined;
+        if (!firstKey) break;
+        animatedRolls.delete(firstKey);
+    }
 }
 
 function getMessageParts(parts: unknown): any[] {
@@ -122,12 +136,45 @@ function isPowerRoll(roll: unknown): roll is Roll {
 }
 
 function getDice(roll: Roll): DrawSteelRollDieView[] {
-    return roll.dice.flatMap((die) =>
-        die.results.map((result) => ({
-            value: Number(result.result ?? 0),
-            active: result.active !== false,
-        }))
+    const d10Term = roll.dice.find((die) => Number((die as any).faces) === 10);
+    if (!d10Term) return [];
+
+    return d10Term.results.map((result) => ({
+        value: Number(result.result ?? 0),
+        active: result.active !== false,
+    }));
+}
+
+function getRollTitle(message: ChatMessage, part: any, roll: Roll): string {
+    const characteristic = getRollCharacteristic(roll);
+    if (characteristic) {
+        const label = globalThis.ds?.CONFIG?.characteristics?.[characteristic]?.label;
+        const localized = game.i18n?.localize(label ?? characteristic) ?? label ?? characteristic;
+        return `${localized} Test`;
+    }
+
+    return String((message as any).title ?? part.flavor ?? "Draw Steel Test");
+}
+
+function getRollCharacteristic(roll: Roll): string | null {
+    const configured = (roll as any).options?.characteristic;
+    if (
+        typeof configured === "string" &&
+        configured in (globalThis.ds?.CONFIG?.characteristics ?? {})
+    ) {
+        return configured;
+    }
+
+    const formula = String((roll as any).formula ?? "");
+    const rollKey = formula.match(/@([A-Z])\b/)?.[1];
+    if (!rollKey) return null;
+
+    const characteristics = globalThis.ds?.CONFIG?.characteristics ?? {};
+    const entry = Object.entries(characteristics).find(
+        ([, data]) => data.rollKey === rollKey
     );
+
+    return entry?.[0] ?? null;
 }
 
 function getSpeakerActor(message: ChatMessage): Actor | null {

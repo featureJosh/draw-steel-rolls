@@ -1,79 +1,72 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Commands
 
 ```bash
 pnpm install          # install dependencies
-pnpm dev              # symlink module into Foundry + start Vite dev server (HMR)
-pnpm build            # production build → dist/ + symlink into Foundry
+pnpm dev              # symlink dev/ into Foundry + start Vite dev server
+pnpm build            # production build -> dist/ + symlink into Foundry
 pnpm lint             # ESLint
-pnpm type-check       # TypeScript check (no emit)
-pnpm build:rc         # type-check + build + rsync to remote (requires .env with DEPLOY_HOST_ALIAS / DEPLOY_PATH)
+pnpm type-check       # TypeScript check, no emit
+pnpm build:rc         # type-check + build + rsync to remote, requires .env
 ```
 
-Dev server proxies to Foundry on `localhost:30000`; Vite itself runs on port `30001`. If Foundry data lives in a non-default path, set `FOUNDRY_MODULES_PATH` before running `dev` or `build`.
+Dev server proxies to Foundry on `localhost:30000`; Vite runs on port `30001`. If Foundry data lives in a non-default path, set `FOUNDRY_MODULES_PATH` before running `dev` or `build`.
 
 ## Architecture
 
-This is a **Foundry VTT v13 module** (not a standalone web app). The `src/main.tsx` entry point hooks into Foundry's lifecycle (`init`, `setup`, `ready`) rather than mounting a normal SPA. Vite bundles it into `dist/main.bundle.js`, which Foundry loads via `module.json → esmodules`.
+This is a Foundry VTT v14 module for the `draw-steel` system only. It is not a standalone web app and it does not create or execute Draw Steel rolls.
 
-### Data flow for a group roll
+The module is a passive visual wrapper:
 
-1. **GM triggers** a roll via `aerisBg3Rolls.requestGroupRoll(initiated)` (public API in `src/api.ts` / `src/api/api.ts`).
-2. **`src/listener/group-roll-listener.ts`** manages the GM-side promise lifecycle.
-3. **`src/socket/_socket.ts`** registers `socketlib` handlers; `src/socket/trigger.ts` broadcasts events to all clients.
-4. **Each client** receives `showGroupRollRequest` → `src/stores/group-roll-store.ts` (`setupGroupRollHooks`) spawns dice via `DiceBoxManager`, then sets state in `useRollStore` (Zustand).
-5. **React overlay** (`src/components/roll-overlay/roll-overlay.tsx`, mounted in `<App>`) reads `useRollStore` and renders the cinematic UI. Results are revealed via `setRollForEveryone` socket event.
-6. On completion, `hideGroupRollRequest` is broadcast and the listener resolves its promise.
+1. `src/main.tsx` registers settings on `init`, mounts the React overlay on `ready`, and registers the Draw Steel chat listener.
+2. `src/listener/draw-steel-roll-listener.ts` listens to native `createChatMessage` and `updateChatMessage` hooks.
+3. The listener accepts only visible Draw Steel `standard` chat messages with `system.parts` entries of `type === "test"` and a latest evaluated native `ds.rolls.PowerRoll`.
+4. Native roll data is copied into `DrawSteelRollOverlayData`: d10 results, total, natural result, tier/product, net boon, critical flags, and speaker actor presentation.
+5. `src/stores/roll-overlay-store.ts` queues overlay requests and spawns Dice So Nice d10 meshes through `DiceBoxManager`.
+6. `src/components/roll-overlay/` renders the cinematic overlay from that native view data.
 
-### System adapters (`src/adapters/`)
+Draw Steel owns mechanics, dialogs, `/test` enrichers, test request chat buttons, hero-token rerolls, tiers, and outcome logic. Do not add custom roll execution unless Draw Steel has no native workflow for the feature.
 
-Each supported system (`dnd`, `pf2e`, `shadowdark`) implements the `GroupRollAdapter<Cfg>` interface (`src/adapters/group-roll-adapter.d.ts`). `getAdapter()` picks the right one based on `game.system.id`. Adapters define:
-- `getRollTypes()` — what roll types the system exposes in the Group Roll Manager
-- `buildRequest()` / `execute()` — how rolls are constructed and evaluated
-- `renderRollTypeSelector()` — system-specific React UI inside the editor
+## Settings
 
-To add a new system: create a new file in `src/adapters/`, implement the interface, and register it in `src/adapters/get-adapter.ts`.
+`src/settings/_register-settings.ts` wires settings. Keep settings visual or diagnostic only:
 
-### Message parsers (`src/messageParsers/`)
+- `debugMode`
+- `overlayEnabled`
+- `background`
+- `displayDurationMs`
+- `border-color`
 
-Parse Foundry chat messages into a normalized format for display in the group roll chat component. One parser per system.
+## Key Files
 
-### Patches (`src/patches/`)
+- `module.json` and `dev/module.json`: Foundry manifest identity, v14 compatibility, Draw Steel-only relationship.
+- `src/listener/draw-steel-roll-listener.ts`: native chat message detection and extraction.
+- `src/stores/roll-overlay-store.ts`: queued overlay lifecycle and d10 mesh spawning.
+- `src/managers/dice-box-manager.ts`: Dice So Nice mesh wrapper.
+- `src/utils/dsn.ts`: Dice So Nice helpers and face-up quaternions.
+- `src/components/roll-overlay/`: React overlay components.
+- `src/types/draw-steel.d.ts` and `src/types/fvtt.d.ts`: local type augmentation for Foundry and Draw Steel globals.
 
-Override Foundry/system initiative hooks so group-roll initiative flows through this module's socket pipeline.
-
-### Settings (`src/settings/`)
-
-`_register-settings.ts` wires all Foundry world/client settings. Individual setting modules export typed getters/setters.
-
-### UI components
-
-- `src/components/roll-overlay/` — main cinematic overlay (dice canvas, player cards, info panel)
-- `src/components/roll-manager/` — GM-facing Group Roll Manager and editor (React)
-- `src/components/chat-message/` — chat card rendered via `aeris-core.registerChatComponents`
-- `src/components/ui/` — shadcn/ui primitives (do not edit generated files)
-
-### Key external dependencies
+## Dependencies
 
 | Dep | Purpose |
 |---|---|
-| `socketlib` | Reliable GM↔client socket calls |
-| `aeris-core` | Chat integration, docs registration, CSS import hook |
-| `dice-so-nice` | 3D dice rendering (`DiceBoxManager` wraps its internal factory) |
-| `color-picker` | Color settings UI |
-| `zustand` | Client-side roll state |
-| `gsap` + `framer-motion` | Animation |
-| `three` | Direct Three.js mesh manipulation for dice materials |
+| `dice-so-nice` | Required Foundry module for 3D dice rendering |
+| `color-picker` | Foundry settings color field |
+| `zustand` | Overlay state |
+| `gsap` | Overlay and dice animation |
+| `three` | Direct dice mesh manipulation |
+| `react` / `react-dom` | Overlay UI |
+| `@tailwindcss/vite` / `tailwindcss` | Scoped overlay styling |
 
-### Path alias
+There is intentionally no `socketlib`, `aeris-core`, system adapter layer, custom group-roll manager, or custom chat card.
 
-`@/` resolves to `src/` (configured in `vite.config.mts` and `tsconfig.app.json`).
+## Build Notes
 
-### Build notes
-
-- `scripts/inject-id.js` post-processes `dist/module.json` to stamp the version.
-- CSS is injected at runtime via the `aeris-core.import-css` hook (not a `<link>` tag in dev mode).
-- Tailwind v4 is used via `@tailwindcss/vite`; styles are scoped under `.tw` in `App.tsx`.
+- `scripts/inject-id.js` post-processes `dist/module.json` to stamp the module id.
+- CSS is emitted by Vite and loaded through the manifest `styles` entry.
+- Tailwind v4 styles are scoped under `.tw` in `src/App.tsx`.
+- `@/` resolves to `src/`.

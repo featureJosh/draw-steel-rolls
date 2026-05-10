@@ -1,0 +1,5 @@
+packages:
+    - "."
+
+allowBuilds:
+    "@league-of-foundry-developers/foundry-vtt-types": true

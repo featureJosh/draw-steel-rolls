@@ -1,0 +1,65 @@
+{
+    "id": "aeris-bg3-rolls",
+    "title": "Aeris BG3 Rolls (Dev)",
+    "description": "Aeris BG3 Rolls HMR",
+    "version": "VERSION_TAG",
+    "authors": [
+        {
+            "name": "Robin Chand",
+            "discord": "robxnlifts"
+        }
+    ],
+    "esmodules": [
+        "http://localhost:30001/modules/aeris-bg3-rolls/src/index.js"
+    ],
+    "socket": true,
+    "compatibility": {
+        "minimum": "13",
+        "verified": "13"
+    },
+    "manifest": "https://aeris-fvtt.gitlab.io/aeris-bg3-rolls/v13/module.json",
+    "download": "https://gitlab.com/api/v4/projects/69135573/packages/generic/aeris-bg3-rolls/VERSION_TAG/aeris-bg3-rolls-VERSION_TAG.zip",
+    "relationships": {
+        "requires": [
+            {
+                "id": "socketlib",
+                "type": "module",
+                "compatibility": {}
+            },
+            {
+                "id": "aeris-core",
+                "type": "module",
+                "compatibility": {}
+            },
+            {
+                "id": "dice-so-nice",
+                "type": "module",
+                "compatibility": {}
+            },
+            {
+                "id": "color-picker",
+                "type": "module",
+                "compatibility": {
+                    "minimum": "1.5"
+                }
+            }
+        ],
+        "systems": [
+            {
+                "id": "dnd5e",
+                "type": "system",
+                "compatibility": {}
+            },
+            {
+                "id": "pf2e",
+                "type": "system",
+                "compatibility": {}
+            },
+            {
+                "id": "shadowdark",
+                "type": "system",
+                "compatibility": {}
+            }
+        ]
+    }
+}

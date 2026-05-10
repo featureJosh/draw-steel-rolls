@@ -24,10 +24,6 @@ export default defineConfig(({ mode }) => {
                         dest: "",
                     },
                     {
-                        src: "docs",
-                        dest: "",
-                    },
-                    {
                         src: "module.json",
                         dest: "",
                     },

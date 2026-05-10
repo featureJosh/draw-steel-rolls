@@ -10,13 +10,12 @@ permissions:
 
 jobs:
     release:
-        name: Build and publish release
+        name: Build GitHub release
         runs-on: ubuntu-latest
         env:
             FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
             PACKAGE_NAME: draw-steel-rolls
             RELEASE_TAG: ${{ github.ref_name }}
-            FOUNDRY_API_TOKEN: ${{ secrets.FOUNDRY_API_TOKEN }}
 
         steps:
             - name: Check out repository
@@ -88,34 +87,3 @@ jobs:
                       --title "Release ${RELEASE_TAG}" \
                       --notes-file release-notes.md
                   fi
-
-            - name: Publish package version to Foundry
-              if: env.FOUNDRY_API_TOKEN != ''
-              run: |
-                  VERSION="${RELEASE_TAG#v}"
-                  MANIFEST_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/module.json"
-                  NOTES_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
-                  COMPATIBILITY="$(jq -c '.compatibility' dist/module.json)"
-
-                  jq -n \
-                    --arg id "${PACKAGE_NAME}" \
-                    --arg version "${VERSION}" \
-                    --arg manifest "${MANIFEST_URL}" \
-                    --arg notes "${NOTES_URL}" \
-                    --argjson compatibility "${COMPATIBILITY}" \
-                    '{
-                      id: $id,
-                      "dry-run": false,
-                      release: {
-                        version: $version,
-                        manifest: $manifest,
-                        notes: $notes,
-                        compatibility: $compatibility
-                      }
-                    }' > foundry-release.json
-
-                  curl --fail-with-body \
-                    -X POST https://foundryvtt.com/_api/packages/release_version/ \
-                    -H "Content-Type: application/json" \
-                    -H "Authorization: ${FOUNDRY_API_TOKEN}" \
-                    --data @foundry-release.json

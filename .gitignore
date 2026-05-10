@@ -3,7 +3,6 @@ node_modules/
 dist
 .DS_Store
 testing
-pnpm-lock.yaml
 .env
 dev/fonts
 dev/assets

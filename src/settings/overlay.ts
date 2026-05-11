@@ -3,6 +3,14 @@ import { MODULE_ID } from "@/config/constants";
 export const DEFAULT_BACKGROUND = `/modules/${MODULE_ID}/assets/roll_bg_2.webm`;
 export const DEFAULT_OVERLAY_DURATION_MS = 9000;
 export const MIN_OVERLAY_DURATION_MS = 7000;
+export const DEFAULT_SETUP_LAYOUT = "card";
+
+export type OverlaySetupLayout = "card" | "panel";
+
+const SETUP_LAYOUT_CHOICES: Record<OverlaySetupLayout, string> = {
+    card: "Inside Roll Card",
+    panel: "Separate Ornate Panel",
+};
 
 export function registerOverlaySettings() {
     game.settings!.register(MODULE_ID, "overlayEnabled", {
@@ -37,6 +45,18 @@ export function registerOverlaySettings() {
         },
     });
 
+    game.settings!.register(MODULE_ID, "setupLayout", {
+        name: "Roll Configuration Layout",
+        hint: "Choose whether pre-roll controls are embedded in the roll card or shown in a separate ornate panel.",
+        scope: "client",
+        config: true,
+        type: String,
+        choices: SETUP_LAYOUT_CHOICES,
+        default: DEFAULT_SETUP_LAYOUT,
+        onChange: (value) => {
+            Hooks.call(`${MODULE_ID}.setupLayout`, normalizeSetupLayout(value));
+        },
+    });
 }
 
 export function isOverlayEnabled(): boolean {
@@ -51,4 +71,12 @@ export function getOverlayDisplayDuration(): number {
     const value = Number(game.settings!.get(MODULE_ID, "displayDurationMs"));
     if (!Number.isFinite(value)) return DEFAULT_OVERLAY_DURATION_MS;
     return Math.max(value, MIN_OVERLAY_DURATION_MS);
+}
+
+export function getOverlaySetupLayout(): OverlaySetupLayout {
+    return normalizeSetupLayout(game.settings!.get(MODULE_ID, "setupLayout"));
+}
+
+function normalizeSetupLayout(value: unknown): OverlaySetupLayout {
+    return value === "panel" ? "panel" : "card";
 }

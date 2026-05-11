@@ -1,12 +1,20 @@
+import { MODULE_ID } from "@/config/constants";
+import { useHookEvent } from "@/hooks/use-hook-event";
+import {
+    getOverlaySetupLayout,
+    OverlaySetupLayout,
+} from "@/settings/overlay";
 import {
     DrawSteelRollOverlayData,
     DrawSteelRollResultOverlayData,
+    DrawSteelRollSetupOverlayData,
     useRollOverlayStore,
 } from "@/stores/roll-overlay-store";
 import React, { useEffect, useState } from "react";
 import { useGsapToggle } from "../../hooks/use-gsap-toggle";
 import { RollOverlayInfo } from "./roll-overlay-info";
 import { RollOverlayPlayerRoll } from "./roll-overlay-player-roll";
+import { RollOverlaySetupPanel } from "./roll-overlay-setup-panel";
 
 export const RollOverlay: React.FC = () => {
     const current = useRollOverlayStore((s) => s.current);
@@ -15,6 +23,10 @@ export const RollOverlay: React.FC = () => {
     const cancelSetup = useRollOverlayStore((s) => s.cancelSetup);
 
     const [phase, setPhase] = useState<"hidden" | "visible">("hidden");
+    const [setupLayout, setSetupLayout] =
+        useState<OverlaySetupLayout>(getOverlaySetupLayout());
+
+    useHookEvent(`${MODULE_ID}.setupLayout`, setSetupLayout);
 
     const {
         elementRef,
@@ -80,6 +92,19 @@ export const RollOverlay: React.FC = () => {
                         resultsRevealed={resultsRevealed}
                         ref={elementRef}
                     />
+                    {current &&
+                        isSetupOverlay(current) &&
+                        setupLayout === "panel" && (
+                            <div className="flex flex-row justify-center items-center">
+                                <div className="mx-[4px]">
+                                    <RollOverlaySetupPanel
+                                        key={`${current.id}-setup-panel`}
+                                        data={current}
+                                        isVisible={shouldShow}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     {current && isResultOverlay(current) && (
                         <div className="flex flex-row justify-center items-center">
                             <div className="mx-[4px]">
@@ -102,4 +127,10 @@ function isResultOverlay(
     data: DrawSteelRollOverlayData
 ): data is DrawSteelRollResultOverlayData {
     return data.phase === "resolved" || data.phase === "obfuscated";
+}
+
+function isSetupOverlay(
+    data: DrawSteelRollOverlayData
+): data is DrawSteelRollSetupOverlayData {
+    return data.phase === "setup" || data.phase === "rolling";
 }

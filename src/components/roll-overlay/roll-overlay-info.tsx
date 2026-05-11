@@ -2,6 +2,10 @@ import { MODULE_ID } from "@/config/constants";
 import { useHookEvent } from "@/hooks/use-hook-event";
 import { cn } from "@/lib/utils";
 import {
+    getOverlaySetupLayout,
+    OverlaySetupLayout,
+} from "@/settings/overlay";
+import {
     DrawSteelRollOverlayData,
     DrawSteelRollResultOverlayData,
     DrawSteelRollSetupOverlayData,
@@ -27,10 +31,14 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
         const [color, setColor] = useState<string | undefined>(
             game.settings!.get(MODULE_ID, "border-color") ?? "#ffffff"
         );
+        const [setupLayout, setSetupLayout] =
+            useState<OverlaySetupLayout>(getOverlaySetupLayout());
 
         useHookEvent(`${MODULE_ID}.border-color`, (value) => {
             if (value) setColor(value);
         });
+
+        useHookEvent(`${MODULE_ID}.setupLayout`, setSetupLayout);
 
         const prompt = useMemo(() => buildResultPrompt(data, resultsRevealed), [
             data,
@@ -83,7 +91,11 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
                     </div>
 
                     {data && isSetupOverlay(data) ? (
-                        <SetupCardControls data={data} />
+                        setupLayout === "card" ? (
+                            <SetupCardControls data={data} />
+                        ) : (
+                            <SetupCardSummary data={data} />
+                        )
                     ) : (
                         <ResultCardContent prompt={prompt} />
                     )}
@@ -228,6 +240,43 @@ const SetupCardControls: React.FC<{ data: DrawSteelRollSetupOverlayData }> = ({
                 <span className="text-[12px]">◆</span>
                 Roll
             </button>
+        </>
+    );
+};
+
+const SetupCardSummary: React.FC<{ data: DrawSteelRollSetupOverlayData }> = ({
+    data,
+}) => {
+    const submitSetup = useRollOverlayStore((s) => s.submitSetup);
+    const disabled = data.phase === "rolling";
+
+    return (
+        <>
+            <button
+                type="button"
+                className={cn(
+                    "pointer-events-auto absolute left-1/2 top-[176px] flex h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/45 bg-black/78 text-[34px] text-white shadow-[0_0_28px_rgba(255,255,255,0.18),inset_0_0_18px_rgba(255,255,255,0.06)] transition hover:bg-white/12 disabled:pointer-events-none disabled:opacity-70",
+                    disabled && "animate-pulse"
+                )}
+                onClick={submitSetup}
+                disabled={disabled}
+                data-tooltip={disabled ? "Rolling" : "Roll"}
+            >
+                <i className="fa-solid fa-diamond" />
+            </button>
+
+            <div className="w-[220px] absolute font-black text-[13px] uppercase tracking-normal left-1/2 top-[235px] -translate-x-1/2 -translate-y-1/2">
+                {disabled
+                    ? "Rolling"
+                    : formatResultBoon(data.modifiers.edges - data.modifiers.banes)}
+            </div>
+
+            <div
+                className="w-[220px] absolute font-semibold text-[18px] left-1/2 top-[282px] -translate-x-1/2 -translate-y-1/2 invisible"
+                aria-hidden
+            >
+                Tier 0
+            </div>
         </>
     );
 };

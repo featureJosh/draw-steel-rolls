@@ -1,4 +1,3 @@
-import { diceBoxManager } from "@/managers/dice-box-manager";
 import { debug } from "@/utils/logging";
 import { gsap } from "gsap";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,7 +9,6 @@ export const useGsapToggle = (
         onHidden?: () => void;
         onShown?: () => void;
         onUpdate?: (progress: number, el: HTMLElement) => void;
-        withDiceBox?: string;
     } = {
         from: {},
         to: {},
@@ -24,22 +22,7 @@ export const useGsapToggle = (
 
     const buildTimeline = () => {
         tlRef.current?.kill();
-        if (opts.withDiceBox) diceBoxManager.stopAnimating(opts.withDiceBox);
-
-        const tl = gsap.timeline({
-            onStart: () => {
-                if (opts.withDiceBox)
-                    diceBoxManager.startAnimating(opts.withDiceBox);
-            },
-            onComplete: () => {
-                if (opts.withDiceBox)
-                    diceBoxManager.stopAnimating(opts.withDiceBox);
-            },
-            onInterrupt: () => {
-                if (opts.withDiceBox)
-                    diceBoxManager.stopAnimating(opts.withDiceBox);
-            },
-        });
+        const tl = gsap.timeline();
         tlRef.current = tl;
         return tl;
     };

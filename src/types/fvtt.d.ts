@@ -9,18 +9,6 @@ declare module "fvtt-types/configuration" {
 
     namespace Hooks {
         interface HookConfig {
-            diceSoNiceRollStart: (
-                id: string,
-                config: { roll: Roll; user: User; users: null; blind: boolean }
-            ) => void;
-            diceSoNiceMessageProcessed: (
-                chatMessageId: string,
-                config: { willTrigger3DRoll: boolean }
-            ) => void;
-            diceSoNiceMessagePreProcess: (
-                chatMessageId: string,
-                config: { willTrigger3DRoll: boolean }
-            ) => void;
             "draw-steel-rolls.border-color": (
                 value: string | undefined
             ) => void;

@@ -23,20 +23,6 @@ export function setupDrawSteelRollListener() {
     Hooks.on("updateChatMessage", (message) => {
         void handleChatMessage(message);
     });
-
-    Hooks.on("diceSoNiceMessagePreProcess", (messageId, interception) => {
-        if (!isOverlayEnabled()) return;
-
-        const message = game.messages?.get(messageId);
-        if (!message) return;
-
-        if (
-            (game as any).dice3d?.showForRoll &&
-            extractNativePowerRoll(message, { remember: false })
-        ) {
-            interception.willTrigger3DRoll = false;
-        }
-    });
 }
 
 async function handleChatMessage(message: ChatMessage) {

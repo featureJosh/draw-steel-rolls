@@ -86,6 +86,7 @@ type QueuedRoll = {
 
 const overlayQueue: QueuedRoll[] = [];
 let isDrainingQueue = false;
+const DICE_ANIMATION_FALLBACK_MS = 4000;
 
 export async function showRollOverlay(data: Omit<DrawSteelRollOverlayData, "background">) {
     return new Promise<void>((resolve, reject) => {
@@ -125,6 +126,7 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
     );
 
     const displayDuration = getOverlayDisplayDuration();
+    await waitForDiceAnimation(data.messageId);
     useRollOverlayStore.getState().revealResults();
 
     const elapsed = Date.now() - startedAt;
@@ -138,4 +140,44 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
 
 function sleep(ms: number) {
     return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function waitForDiceAnimation(messageId: string) {
+    const dice3d = (game as any).dice3d;
+    if (!dice3d) return;
+
+    const waitByMessageId =
+        dice3d.waitFor3DAnimationByMessageID ??
+        dice3d.waitFor3DAnimationByMessageId;
+
+    if (typeof waitByMessageId === "function") {
+        await withTimeout(
+            Promise.resolve(waitByMessageId.call(dice3d, messageId)),
+            DICE_ANIMATION_FALLBACK_MS
+        );
+        return;
+    }
+
+    if (typeof dice3d.waitFor3DAnimation === "function") {
+        await withTimeout(
+            Promise.resolve(dice3d.waitFor3DAnimation.call(dice3d)),
+            DICE_ANIMATION_FALLBACK_MS
+        );
+        return;
+    }
+
+    await sleep(700);
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | void> {
+    let timeoutId: number | null = null;
+    const timeoutPromise = new Promise<void>((resolve) => {
+        timeoutId = window.setTimeout(resolve, timeoutMs);
+    });
+
+    try {
+        return await Promise.race([promise, timeoutPromise]);
+    } finally {
+        if (timeoutId !== null) window.clearTimeout(timeoutId);
+    }
 }

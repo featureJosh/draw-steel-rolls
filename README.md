@@ -4,6 +4,8 @@
 
 This module is intentionally a visual wrapper. Draw Steel owns the roll mechanics, Power Roll dialogs, `/test` enrichers, test request chat parts, hero-token rerolls, tiers, and outcome logic. This module listens for native Draw Steel test chat messages and renders an overlay from the `PowerRoll` data already produced by the system.
 
+This project is derived from [aeris-bg3-rolls](https://gitlab.com/aeris-fvtt/aeris-bg3-rolls) on GitLab—a fork of that codebase, adapted for Draw Steel instead of Baldur’s Gate 3 / D&D 5e.
+
 ## Features
 
 - Native Draw Steel test roll detection.
@@ -11,19 +13,6 @@ This module is intentionally a visual wrapper. Draw Steel owns the roll mechanic
 - Total, natural result, tier, critical, edge, and bane display from native `PowerRoll` data.
 - Hero-token reroll support through native Draw Steel chat message updates.
 - Visual-only settings for overlay color, background, enable/disable, and duration.
-
-## Usage
-
-Use Draw Steel normally:
-
-```text
-/test might
-/test R easy
-/test I hard
-/test I edges=1 banes=1
-```
-
-You can also roll tests from actor sheets or native Draw Steel test request chat buttons. When Draw Steel posts a visible native test roll, this module animates it.
 
 ## Compatibility
 
@@ -46,6 +35,12 @@ pnpm build
 `pnpm dev` symlinks `dev/` into the Foundry module directory and starts Vite on port `30001`. Set `FOUNDRY_MODULES_PATH` if your Foundry data directory is not in the standard platform location.
 
 ## Attribution
+
+### Fork lineage
+
+Draw Steel Rolls builds on [aeris-bg3-rolls](https://gitlab.com/aeris-fvtt/aeris-bg3-rolls). See that repository for the original implementation and history.
+
+### Media
 
 The background videos (`roll_bg.webm` and `roll_bg_2.webm`) are sourced from:
 

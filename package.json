@@ -12,7 +12,9 @@
         "link:dev": "node scripts/link-dev.js",
         "dev": "pnpm link:dev && vite dev",
         "link:dist": "node scripts/link-dist.js",
-        "build": "pnpm link:dist && vite build && node scripts/inject-id.js"
+        "build": "pnpm link:dist && vite build && node scripts/inject-id.js",
+        "release:build": "bash scripts/local-release-build.sh",
+        "release:tag": "bash scripts/tag-release.sh"
     },
     "keywords": [],
     "author": "",

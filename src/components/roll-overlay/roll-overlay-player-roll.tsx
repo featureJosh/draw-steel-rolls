@@ -16,6 +16,9 @@ import React, {
     useState,
 } from "react";
 import { Material } from "three";
+import { DieAdvantage } from "../svg/die-advantage";
+import { DieDisadvantage } from "../svg/die-disadvantage";
+import { DieIgnored } from "../svg/die-ignored";
 import { PlayerRollBorder } from "../svg/player-roll-border";
 
 interface RollOverlayPlayerRollProps {
@@ -152,17 +155,33 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
             </div>
 
             <div className="flex items-center justify-center gap-2 z-[13]">
-                {data.dice.map((die, index) => (
-                    <div
-                        key={`${data.id}-die-${index}`}
-                        className={cn(
-                            "flex h-10 min-w-10 items-center justify-center rounded-sm border border-white/50 bg-black/75 px-2 text-[20px] font-black leading-none shadow-[0_6px_12px_rgba(0,0,0,0.35)]",
-                            !die.active && "opacity-45 line-through"
-                        )}
-                    >
-                        {die.value}
-                    </div>
-                ))}
+                {data.dice.map((die, index) => {
+                    let icon: React.ReactNode = null;
+                    if (!die.active) {
+                        icon = <DieIgnored className="h-[18px] w-[16px]" />;
+                    } else if (data.netBoon > 0) {
+                        icon = <DieAdvantage className="h-[20px] w-[18px]" />;
+                    } else if (data.netBoon < 0) {
+                        icon = <DieDisadvantage className="h-[20px] w-[18px]" />;
+                    }
+
+                    return (
+                        <div
+                            key={`${data.id}-die-${index}`}
+                            className={cn(
+                                "relative flex h-10 min-w-10 items-center justify-center rounded-sm border border-white/50 bg-black/75 px-2 text-[20px] font-black leading-none shadow-[0_6px_12px_rgba(0,0,0,0.35)]",
+                                !die.active && "opacity-45 line-through"
+                            )}
+                        >
+                            {icon && (
+                                <span className="absolute -left-2 -top-2 z-[15] drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+                                    {icon}
+                                </span>
+                            )}
+                            {die.value}
+                        </div>
+                    );
+                })}
                 <div className="flex h-10 min-w-14 items-center justify-center rounded-sm border border-white/30 bg-white/90 px-2 text-[20px] font-black leading-none text-black">
                     {data.total}
                 </div>

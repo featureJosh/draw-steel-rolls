@@ -1,14 +1,15 @@
-import {
-    isOverlayEnabled,
-} from "@/settings/overlay";
+import { isOverlayEnabled } from "@/settings/overlay";
 import {
     DrawSteelRollDieView,
+    DrawSteelRollResultInput,
     showRollOverlay,
 } from "@/stores/roll-overlay-store";
 import { warn } from "@/utils/logging";
 
 const animatedRolls = new Set<string>();
 const MAX_ANIMATED_ROLL_KEYS = 500;
+
+type RollVisibility = "visible" | "obfuscated" | "hidden";
 
 export function setupDrawSteelRollListener() {
     if (game.system?.id !== "draw-steel") {
@@ -41,9 +42,9 @@ async function handleChatMessage(message: ChatMessage) {
 function extractNativePowerRoll(
     message: ChatMessage,
     { remember = true }: { remember?: boolean } = {}
-) {
-    if (!message.isContentVisible) return null;
-    if ((message as any).blind && !game.user?.isGM) return null;
+): DrawSteelRollResultInput | null {
+    const visibility = getRollVisibility(message);
+    if (visibility === "hidden") return null;
     if ((message as any).type !== "standard") return null;
 
     const parts = getMessageParts((message as any).system?.parts);
@@ -54,11 +55,11 @@ function extractNativePowerRoll(
             if (!isPowerRoll(roll)) continue;
 
             const partId = String(part.id ?? part._id ?? "test");
-            const key = `${message.uuid}.${partId}.${rollIndex}`;
+            const key = `${message.uuid}.${partId}.${rollIndex}.${visibility}`;
             if (remember && animatedRolls.has(key)) continue;
 
             const dice = getDice(roll);
-            if (!dice.length) continue;
+            if (!dice.length && visibility === "visible") continue;
             if (remember) rememberAnimatedRoll(key);
 
             const actor = getSpeakerActor(message);
@@ -87,13 +88,27 @@ function extractNativePowerRoll(
                 isCritical: !!(roll as any).isCritical,
                 isNat20: !!(roll as any).isNat20,
                 user: message.author ?? game.user!,
+                authorId: message.author?.id ?? (message as any).user ?? null,
                 nativeRoll: roll,
                 speaker: message.speaker,
+                formula: getFlavorlessFormula(roll),
+                messageMode: getMessageMode(message),
+                visibility,
             };
         }
     }
 
     return null;
+}
+
+function getRollVisibility(message: ChatMessage): RollVisibility {
+    if ((message as any).blind) {
+        if (game.user?.isGM) return "visible";
+        if (message.isAuthor) return "obfuscated";
+        return "hidden";
+    }
+
+    return message.isContentVisible ? "visible" : "hidden";
 }
 
 function rememberAnimatedRoll(key: string) {
@@ -189,6 +204,7 @@ function getRollTitle(message: ChatMessage, part: any, roll: Roll): string {
 function getRollTypeLabel(part: any, roll: Roll): string {
     if (part?.type === "abilityResult") return "Ability Power Roll";
     if (part?.type === "test") return "Test";
+    if (part?.type === "project") return "Project Roll";
 
     const type = String((roll as any).options?.type ?? "");
     if (type === "ability") return "Ability Power Roll";
@@ -240,4 +256,28 @@ function getSpeakerActor(message: ChatMessage): Actor | null {
     };
 
     return chatClass.getSpeakerActor?.(message.speaker) ?? null;
+}
+
+function getFlavorlessFormula(roll: Roll): string {
+    return String((roll as any).flavorlessFormula ?? roll.formula ?? "");
+}
+
+function getMessageMode(message: ChatMessage): string {
+    if ((message as any).blind) return "blind";
+
+    const whisper = Array.isArray((message as any).whisper)
+        ? ((message as any).whisper as string[])
+        : [];
+
+    if (!whisper.length) return "public";
+    if (message.author?.id && whisper.length === 1 && whisper.includes(message.author.id)) {
+        return "self";
+    }
+
+    const gmIds = new Set(
+        game.users?.filter((user) => user.isGM).map((user) => user.id) ?? []
+    );
+    if (whisper.every((userId) => gmIds.has(userId))) return "gm";
+
+    return "private";
 }

@@ -4,20 +4,71 @@ import {
 } from "@/settings/overlay";
 import { create } from "zustand";
 
+export interface PowerRollModifiers {
+    edges: number;
+    banes: number;
+    bonuses: number;
+}
+
+export interface PowerRollSkillOption {
+    value: string;
+    label: string;
+    group?: string;
+}
+
+export interface PowerRollSkillModifier {
+    edges?: number;
+    banes?: number;
+}
+
+export interface PowerRollSetupPrompt {
+    id: string;
+    title: string;
+    rollType: string;
+    actorName: string;
+    formula: string;
+    modifiers: PowerRollModifiers;
+    messageMode: string;
+    skill: string | null;
+    skillOptions: PowerRollSkillOption[];
+    skillModifiers: Record<string, PowerRollSkillModifier>;
+}
+
+export interface PowerRollPromptResult {
+    rolls: [PowerRollModifiers];
+    skill: string | null;
+    messageMode: string;
+}
+
 export interface DrawSteelRollDieView {
     value: number;
     active: boolean;
 }
 
-export interface DrawSteelRollOverlayData {
+interface OverlayBase {
     id: string;
+    title: string;
+    rollType: string;
+    actorName: string;
+    formula: string;
+    background: string;
+    messageMode?: string;
+}
+
+export interface DrawSteelRollSetupOverlayData extends OverlayBase {
+    phase: "setup" | "rolling";
+    modifiers: PowerRollModifiers;
+    skill: string | null;
+    skillOptions: PowerRollSkillOption[];
+    skillModifiers: Record<string, PowerRollSkillModifier>;
+}
+
+export interface DrawSteelRollResultOverlayData extends OverlayBase {
+    phase: "resolved" | "obfuscated";
     messageId: string;
     partId: string;
     rollIndex: number;
-    title: string;
     flavor: string;
-    rollType: string;
-    actorName: string;
     actorImg?: string;
     dice: DrawSteelRollDieView[];
     total: number;
@@ -28,71 +79,257 @@ export interface DrawSteelRollOverlayData {
     netBoon: number;
     isCritical: boolean;
     isNat20: boolean;
-    background: string;
+    authorId: string | null;
     user: User;
-    nativeRoll: Roll;
+    nativeRoll: Roll | null;
     speaker?: ChatMessage["speaker"];
 }
+
+export type DrawSteelRollOverlayData =
+    | DrawSteelRollSetupOverlayData
+    | DrawSteelRollResultOverlayData;
+
+export type DrawSteelRollResultInput = Omit<
+    DrawSteelRollResultOverlayData,
+    "background" | "phase"
+> & {
+    visibility: "visible" | "obfuscated";
+};
 
 interface RollOverlayState {
     current: DrawSteelRollOverlayData | null;
     shouldShow: boolean;
     resultsRevealed: boolean;
-    diceIds: string[];
-    canvasVisible: boolean;
-    show: (roll: DrawSteelRollOverlayData, diceIds: string[]) => void;
+    beginSetup: (prompt: PowerRollSetupPrompt) => void;
+    adjustSetupModifier: (key: keyof PowerRollModifiers, delta: number) => void;
+    setSetupSkill: (skill: string | null) => void;
+    setSetupMessageMode: (messageMode: string) => void;
+    submitSetup: () => void;
+    cancelSetup: () => void;
+    setResolved: (roll: DrawSteelRollResultInput) => void;
     revealResults: () => void;
     hide: () => void;
     clear: () => void;
-    hideCanvas: () => void;
 }
 
-export const useRollOverlayStore = create<RollOverlayState>((set) => ({
-    current: null,
-    shouldShow: false,
-    resultsRevealed: false,
-    diceIds: [],
-    canvasVisible: false,
-
-    show: (roll, diceIds) =>
-        set({
-            current: roll,
-            diceIds,
-            shouldShow: true,
-            resultsRevealed: false,
-            canvasVisible: diceIds.length > 0,
-        }),
-
-    revealResults: () => set({ resultsRevealed: true }),
-
-    hide: () => set({ shouldShow: false }),
-
-    clear: () =>
-        set({
-            current: null,
-            resultsRevealed: false,
-            diceIds: [],
-            canvasVisible: false,
-        }),
-
-    hideCanvas: () => set({ canvasVisible: false }),
-}));
+type ActivePrompt = {
+    id: string;
+    resolve: (result: PowerRollPromptResult | null) => void;
+};
 
 type QueuedRoll = {
-    data: Omit<DrawSteelRollOverlayData, "background">;
+    data: DrawSteelRollResultInput;
     resolve: () => void;
     reject: (error: unknown) => void;
 };
 
 const overlayQueue: QueuedRoll[] = [];
+let activePrompt: ActivePrompt | null = null;
 let isDrainingQueue = false;
-const DICE_ANIMATION_FALLBACK_MS = 4000;
 
-export async function showRollOverlay(data: Omit<DrawSteelRollOverlayData, "background">) {
+const DICE_ANIMATION_FALLBACK_MS = 4000;
+const ROLLING_OVERLAY_TIMEOUT_MS = 30000;
+const EDGE_BANE_MIN = 0;
+const EDGE_BANE_MAX = 2;
+const HIDDEN_MESSAGE_MODES = new Set(["ic"]);
+
+let rollingTimeoutId: number | null = null;
+
+export const useRollOverlayStore = create<RollOverlayState>((set, get) => ({
+    current: null,
+    shouldShow: false,
+    resultsRevealed: false,
+
+    beginSetup: (prompt) => {
+        clearRollingTimeout();
+        set({
+            current: {
+                ...prompt,
+                phase: "setup",
+                background: getOverlayBackground(),
+            },
+            shouldShow: true,
+            resultsRevealed: false,
+        });
+    },
+
+    adjustSetupModifier: (key, delta) => {
+        set((state) => {
+            const current = state.current;
+            if (!current || current.phase !== "setup") return state;
+
+            const value = current.modifiers[key] + delta;
+            const nextValue =
+                key === "bonuses"
+                    ? value
+                    : clampInteger(value, EDGE_BANE_MIN, EDGE_BANE_MAX);
+
+            return {
+                current: {
+                    ...current,
+                    modifiers: {
+                        ...current.modifiers,
+                        [key]: nextValue,
+                    },
+                },
+            };
+        });
+    },
+
+    setSetupSkill: (skill) => {
+        set((state) => {
+            const current = state.current;
+            if (!current || current.phase !== "setup") return state;
+
+            const previousSkill = current.skill ?? "";
+            const nextSkill = skill ?? "";
+            if (previousSkill === nextSkill) return state;
+
+            const modifiers = { ...current.modifiers };
+
+            if (previousSkill === "" && nextSkill !== "") modifiers.bonuses += 2;
+            else if (previousSkill !== "" && nextSkill === "") modifiers.bonuses -= 2;
+
+            const previousModifiers = current.skillModifiers[previousSkill];
+            if (previousModifiers) {
+                modifiers.edges -= previousModifiers.edges ?? 0;
+                modifiers.banes -= previousModifiers.banes ?? 0;
+            }
+
+            const nextModifiers = current.skillModifiers[nextSkill];
+            if (nextModifiers) {
+                modifiers.edges += nextModifiers.edges ?? 0;
+                modifiers.banes += nextModifiers.banes ?? 0;
+            }
+
+            return {
+                current: {
+                    ...current,
+                    skill: nextSkill || null,
+                    modifiers: normalizeModifiers(modifiers),
+                },
+            };
+        });
+    },
+
+    setSetupMessageMode: (messageMode) => {
+        set((state) => {
+            const current = state.current;
+            if (!current || current.phase !== "setup") return state;
+
+            return {
+                current: {
+                    ...current,
+                    messageMode,
+                },
+            };
+        });
+    },
+
+    submitSetup: () => {
+        const current = get().current;
+        if (!current || current.phase !== "setup") return;
+
+        const result: PowerRollPromptResult = {
+            rolls: [normalizeModifiers(current.modifiers)],
+            skill: current.skill || null,
+            messageMode: current.messageMode ?? getDefaultMessageMode(),
+        };
+
+        const prompt = activePrompt;
+        activePrompt = null;
+
+        set({
+            current: {
+                ...current,
+                phase: "rolling",
+                modifiers: result.rolls[0],
+                skill: result.skill,
+                messageMode: result.messageMode,
+            },
+            resultsRevealed: false,
+            shouldShow: true,
+        });
+
+        startRollingTimeout();
+        prompt?.resolve(result);
+    },
+
+    cancelSetup: () => {
+        resolveActivePrompt(null);
+        clearRollingTimeout();
+        set({ shouldShow: false });
+        window.setTimeout(() => get().clear(), 500);
+    },
+
+    setResolved: (roll) => {
+        clearRollingTimeout();
+        set({
+            current: {
+                ...roll,
+                phase: roll.visibility === "obfuscated" ? "obfuscated" : "resolved",
+                background: getOverlayBackground(),
+            },
+            shouldShow: true,
+            resultsRevealed: false,
+        });
+    },
+
+    revealResults: () => set({ resultsRevealed: true }),
+
+    hide: () => set({ shouldShow: false }),
+
+    clear: () => {
+        clearRollingTimeout();
+        set({
+            current: null,
+            resultsRevealed: false,
+        });
+    },
+}));
+
+export async function requestPowerRollSetup(
+    prompt: Omit<PowerRollSetupPrompt, "id">
+): Promise<PowerRollPromptResult | null> {
+    resolveActivePrompt(null);
+
+    const id = foundry.utils.randomID();
+
+    return new Promise((resolve) => {
+        activePrompt = { id, resolve };
+        useRollOverlayStore.getState().beginSetup({
+            ...prompt,
+            id,
+            modifiers: normalizeModifiers(prompt.modifiers),
+            messageMode: normalizeMessageMode(prompt.messageMode),
+        });
+    });
+}
+
+export async function showRollOverlay(data: DrawSteelRollResultInput) {
+    const current = useRollOverlayStore.getState().current;
+
+    if (
+        current?.phase === "rolling" &&
+        data.authorId &&
+        data.authorId === game.user?.id
+    ) {
+        await playRollOverlay(data);
+        return;
+    }
+
     return new Promise<void>((resolve, reject) => {
         overlayQueue.push({ data, resolve, reject });
         void drainOverlayQueue();
     });
+}
+
+function resolveActivePrompt(result: PowerRollPromptResult | null) {
+    if (!activePrompt) return;
+
+    const prompt = activePrompt;
+    activePrompt = null;
+    prompt.resolve(result);
 }
 
 async function drainOverlayQueue() {
@@ -114,16 +351,10 @@ async function drainOverlayQueue() {
     isDrainingQueue = false;
 }
 
-async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background">) {
+async function playRollOverlay(data: DrawSteelRollResultInput) {
     const startedAt = Date.now();
 
-    useRollOverlayStore.getState().show(
-        {
-            ...data,
-            background: getOverlayBackground(),
-        },
-        []
-    );
+    useRollOverlayStore.getState().setResolved(data);
 
     const displayDuration = getOverlayDisplayDuration();
     await waitForDiceAnimation(data.messageId);
@@ -136,6 +367,22 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
     await sleep(1000);
 
     useRollOverlayStore.getState().clear();
+}
+
+function startRollingTimeout() {
+    clearRollingTimeout();
+    rollingTimeoutId = window.setTimeout(() => {
+        const current = useRollOverlayStore.getState().current;
+        if (current?.phase !== "rolling") return;
+        useRollOverlayStore.getState().hide();
+        window.setTimeout(() => useRollOverlayStore.getState().clear(), 500);
+    }, ROLLING_OVERLAY_TIMEOUT_MS);
+}
+
+function clearRollingTimeout() {
+    if (rollingTimeoutId === null) return;
+    window.clearTimeout(rollingTimeoutId);
+    rollingTimeoutId = null;
 }
 
 function sleep(ms: number) {
@@ -180,4 +427,30 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
     } finally {
         if (timeoutId !== null) window.clearTimeout(timeoutId);
     }
+}
+
+function normalizeModifiers(modifiers: Partial<PowerRollModifiers>): PowerRollModifiers {
+    return {
+        edges: clampInteger(modifiers.edges ?? 0, EDGE_BANE_MIN, EDGE_BANE_MAX),
+        banes: clampInteger(modifiers.banes ?? 0, EDGE_BANE_MIN, EDGE_BANE_MAX),
+        bonuses: toInteger(modifiers.bonuses ?? 0),
+    };
+}
+
+function clampInteger(value: number, min: number, max: number) {
+    return Math.min(max, Math.max(min, toInteger(value)));
+}
+
+function toInteger(value: number) {
+    if (!Number.isFinite(value)) return 0;
+    return Math.trunc(value);
+}
+
+function getDefaultMessageMode() {
+    return normalizeMessageMode((game.settings as any)?.get("core", "messageMode"));
+}
+
+function normalizeMessageMode(mode: unknown) {
+    const value = String(mode || "public");
+    return HIDDEN_MESSAGE_MODES.has(value) ? "public" : value;
 }

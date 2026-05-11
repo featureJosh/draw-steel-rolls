@@ -1,4 +1,8 @@
-import { useRollOverlayStore } from "@/stores/roll-overlay-store";
+import {
+    DrawSteelRollOverlayData,
+    DrawSteelRollResultOverlayData,
+    useRollOverlayStore,
+} from "@/stores/roll-overlay-store";
 import React, { useEffect, useState } from "react";
 import { useGsapToggle } from "../../hooks/use-gsap-toggle";
 import { RollOverlayInfo } from "./roll-overlay-info";
@@ -8,6 +12,7 @@ export const RollOverlay: React.FC = () => {
     const current = useRollOverlayStore((s) => s.current);
     const shouldShow = useRollOverlayStore((s) => s.shouldShow);
     const resultsRevealed = useRollOverlayStore((s) => s.resultsRevealed);
+    const cancelSetup = useRollOverlayStore((s) => s.cancelSetup);
 
     const [phase, setPhase] = useState<"hidden" | "visible">("hidden");
 
@@ -45,6 +50,17 @@ export const RollOverlay: React.FC = () => {
         }
     }, [shouldShow]);
 
+    useEffect(() => {
+        if (current?.phase !== "setup") return;
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") cancelSetup();
+        };
+
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [cancelSetup, current?.phase]);
+
     return (
         <>
             <div
@@ -64,7 +80,7 @@ export const RollOverlay: React.FC = () => {
                         resultsRevealed={resultsRevealed}
                         ref={elementRef}
                     />
-                    {current && (
+                    {current && isResultOverlay(current) && (
                         <div className="flex flex-row justify-center items-center">
                             <div className="mx-[4px]">
                                 <RollOverlayPlayerRoll
@@ -81,3 +97,9 @@ export const RollOverlay: React.FC = () => {
         </>
     );
 };
+
+function isResultOverlay(
+    data: DrawSteelRollOverlayData
+): data is DrawSteelRollResultOverlayData {
+    return data.phase === "resolved" || data.phase === "obfuscated";
+}

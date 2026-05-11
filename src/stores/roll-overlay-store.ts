@@ -2,6 +2,7 @@ import { diceBoxManager } from "@/managers/dice-box-manager";
 import {
     getOverlayBackground,
     getOverlayDisplayDuration,
+    isScreenDiceEnabled,
 } from "@/settings/overlay";
 import { getDiceOffsetCoordinates } from "@/utils/dice-offset-coordinates";
 import { Material } from "three";
@@ -57,7 +58,7 @@ export const useRollOverlayStore = create<RollOverlayState>((set) => ({
             current: roll,
             diceIds,
             shouldShow: true,
-            canvasVisible: true,
+            canvasVisible: diceIds.length > 0,
         }),
 
     hide: () => set({ shouldShow: false }),
@@ -111,31 +112,9 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
     const state = useRollOverlayStore.getState();
     await Promise.all(state.diceIds.map((id) => diceBoxManager.removeDie(id)));
 
-    const diceIds: string[] = [];
-    const baseY = 265;
-    const offsets = getDieOffsets(data.dice.length);
-
-    await Promise.all(
-        data.dice.map(async (die, index) => {
-            const id = `${data.id}-${index}-${foundry.utils.randomID()}`;
-            const { top, left } = getDiceOffsetCoordinates(index, data.dice.length);
-            const mesh = await diceBoxManager
-                .spawnDie(id, "d10", data.user, {
-                    x: offsets[index] + left * 2,
-                    y: baseY + top * 2,
-                })
-                .catch(() => undefined);
-
-            if (!mesh) return;
-            mesh.result = die.value;
-            mesh.userData.baseDomX = offsets[index] + left * 2;
-            mesh.userData.baseDomY = baseY + top * 2;
-            mesh.userData.rollValue = die.value;
-            mesh.userData.active = die.active;
-            setMaterialOpacity(mesh.material, 0);
-            diceIds.push(id);
-        })
-    );
+    const diceIds = isScreenDiceEnabled()
+        ? await spawnScreenDice(data)
+        : [];
 
     useRollOverlayStore.getState().show(
         {
@@ -164,6 +143,38 @@ function getDieOffsets(n: number): number[] {
     const mid = (n - 1) / 2;
     for (let i = 0; i < n; i++) arr.push((i - mid) * 82);
     return arr;
+}
+
+async function spawnScreenDice(
+    data: Omit<DrawSteelRollOverlayData, "background">
+): Promise<string[]> {
+    const diceIds: string[] = [];
+    const baseY = 265;
+    const offsets = getDieOffsets(data.dice.length);
+
+    await Promise.all(
+        data.dice.map(async (die, index) => {
+            const id = `${data.id}-${index}-${foundry.utils.randomID()}`;
+            const { top, left } = getDiceOffsetCoordinates(index, data.dice.length);
+            const mesh = await diceBoxManager
+                .spawnDie(id, "d10", data.user, {
+                    x: offsets[index] + left * 2,
+                    y: baseY + top * 2,
+                })
+                .catch(() => undefined);
+
+            if (!mesh) return;
+            mesh.result = die.value;
+            mesh.userData.baseDomX = offsets[index] + left * 2;
+            mesh.userData.baseDomY = baseY + top * 2;
+            mesh.userData.rollValue = die.value;
+            mesh.userData.active = die.active;
+            setMaterialOpacity(mesh.material, 0);
+            diceIds.push(id);
+        })
+    );
+
+    return diceIds;
 }
 
 function setMaterialOpacity(material: Material | Material[], opacity: number) {

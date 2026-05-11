@@ -39,7 +39,7 @@ export const DiceCanvas = forwardRef<HTMLDivElement, DiceCanvasProps>(
                     width: "100%",
                     height: "100%",
                     pointerEvents: "none",
-                    zIndex: 500,
+                    zIndex: 501,
                     visibility: isVisible ? "visible" : "hidden",
                 }}
                 className={className}

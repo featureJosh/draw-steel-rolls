@@ -36,6 +36,18 @@ export function registerOverlaySettings() {
             step: 500,
         },
     });
+
+    game.settings!.register(MODULE_ID, "screenDiceEnabled", {
+        name: "Show 3D Screen Dice",
+        hint: "Spawn Dice So Nice dice on the screen during the cinematic overlay. When disabled, only the roll card dice are shown.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: (value) => {
+            Hooks.call(`${MODULE_ID}.screenDiceEnabled`, !!value);
+        },
+    });
 }
 
 export function isOverlayEnabled(): boolean {
@@ -50,4 +62,8 @@ export function getOverlayDisplayDuration(): number {
     const value = Number(game.settings!.get(MODULE_ID, "displayDurationMs"));
     if (!Number.isFinite(value)) return DEFAULT_OVERLAY_DURATION_MS;
     return Math.max(value, MIN_OVERLAY_DURATION_MS);
+}
+
+export function isScreenDiceEnabled(): boolean {
+    return !!game.settings!.get(MODULE_ID, "screenDiceEnabled");
 }

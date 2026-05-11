@@ -126,7 +126,7 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
     return (
         <div
             ref={elementRef}
-            className="relative flex w-[260px] min-h-[190px] flex-col items-center justify-start gap-2 rounded-sm border border-white/20 bg-black/45 px-4 pt-3 pb-4 shadow-[0_12px_24px_rgba(0,0,0,0.35)] pointer-events-auto"
+            className="relative flex w-[260px] min-h-[190px] flex-col items-center justify-start gap-2 px-4 pt-3 pb-4 pointer-events-auto"
         >
             <div className="relative flex h-[108px] w-[120px] items-center justify-center">
                 {data.actorImg && (

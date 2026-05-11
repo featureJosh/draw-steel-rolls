@@ -1,3 +1,6 @@
+import { MODULE_ID } from "@/config/constants";
+import { useHookEvent } from "@/hooks/use-hook-event";
+import { isScreenDiceEnabled } from "@/settings/overlay";
 import { useRollOverlayStore } from "@/stores/roll-overlay-store";
 import React, { useEffect, useState } from "react";
 import { useGsapToggle } from "../../hooks/use-gsap-toggle";
@@ -8,8 +11,13 @@ import { RollOverlayPlayerRoll } from "./roll-overlay-player-roll";
 export const RollOverlay: React.FC = () => {
     const current = useRollOverlayStore((s) => s.current);
     const shouldShow = useRollOverlayStore((s) => s.shouldShow);
+    const [showScreenDice, setShowScreenDice] = useState(isScreenDiceEnabled);
 
     const [phase, setPhase] = useState<"hidden" | "visible">("hidden");
+
+    useHookEvent(`${MODULE_ID}.screenDiceEnabled`, (value) => {
+        setShowScreenDice(value);
+    });
 
     const {
         elementRef,
@@ -47,7 +55,7 @@ export const RollOverlay: React.FC = () => {
 
     return (
         <>
-            <DiceCanvas />
+            {showScreenDice && <DiceCanvas />}
             <div
                 ref={bgRef}
                 className={`absolute left-0 top-0 inset-0 w-full h-full pointer-events-none ${

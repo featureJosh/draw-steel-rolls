@@ -1,6 +1,5 @@
 import {
     isOverlayEnabled,
-    isScreenDiceEnabled,
 } from "@/settings/overlay";
 import {
     DrawSteelRollDieView,
@@ -26,12 +25,15 @@ export function setupDrawSteelRollListener() {
     });
 
     Hooks.on("diceSoNiceMessagePreProcess", (messageId, interception) => {
-        if (!isOverlayEnabled() || isScreenDiceEnabled()) return;
+        if (!isOverlayEnabled()) return;
 
         const message = game.messages?.get(messageId);
         if (!message) return;
 
-        if (extractNativePowerRoll(message, { remember: false })) {
+        if (
+            (game as any).dice3d?.showForRoll &&
+            extractNativePowerRoll(message, { remember: false })
+        ) {
             interception.willTrigger3DRoll = false;
         }
     });
@@ -99,6 +101,8 @@ function extractNativePowerRoll(
                 isCritical: !!(roll as any).isCritical,
                 isNat20: !!(roll as any).isNat20,
                 user: message.author ?? game.user!,
+                nativeRoll: roll,
+                speaker: message.speaker,
             };
         }
     }

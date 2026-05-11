@@ -6,10 +6,11 @@ import { RollOverlayBg } from "../svg/roll-overlay-bg";
 
 interface Props {
     data: DrawSteelRollOverlayData | null;
+    resultsRevealed: boolean;
 }
 
 export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
-    ({ data }, ref) => {
+    ({ data, resultsRevealed }, ref) => {
         const [color, setColor] = useState<string | undefined>(
             game.settings!.get(MODULE_ID, "border-color") ?? "#ffffff"
         );
@@ -31,11 +32,13 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
                 };
             }
 
-            const tier = data.product
+            const tier = resultsRevealed && data.product
                 ? `${data.isCritical ? "Critical " : ""}Tier ${data.product}`
                 : "";
             const natural =
-                data.modifier === 0
+                !resultsRevealed
+                    ? ""
+                    : data.modifier === 0
                     ? `Natural ${data.naturalResult}`
                     : `Natural ${data.naturalResult} ${data.modifier > 0 ? "+" : ""}${data.modifier}`;
 
@@ -45,10 +48,10 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
                 type: data.flavor || data.actorName,
                 rollType: data.rollType,
                 tier,
-                total: String(data.total),
+                total: resultsRevealed ? String(data.total) : "",
                 natural,
             };
-        }, [data]);
+        }, [data, resultsRevealed]);
 
         const isVideo = MEDIA_VIDEO_REGEX.test(prompt.img);
         const maskStyle = {

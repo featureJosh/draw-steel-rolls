@@ -1,21 +1,9 @@
 import { MODULE_ID } from "@/config/constants";
-import { useDiceAnimation2 } from "@/hooks/use-dice-anim-2";
 import { useGsapToggle } from "@/hooks/use-gsap-toggle";
 import { useHookEvent } from "@/hooks/use-hook-event";
 import { cn } from "@/lib/utils";
-import { diceBoxManager } from "@/managers/dice-box-manager";
-import {
-    DrawSteelRollOverlayData,
-    useRollOverlayStore,
-} from "@/stores/roll-overlay-store";
-import { getDiceOffsetCoordinates } from "@/utils/dice-offset-coordinates";
-import gsap from "gsap";
-import React, {
-    useEffect,
-    useRef,
-    useState,
-} from "react";
-import { Material } from "three";
+import { DrawSteelRollOverlayData } from "@/stores/roll-overlay-store";
+import React, { useEffect, useState } from "react";
 import { DieAdvantage } from "../svg/die-advantage";
 import { DieDisadvantage } from "../svg/die-disadvantage";
 import { DieIgnored } from "../svg/die-ignored";
@@ -25,8 +13,6 @@ interface RollOverlayPlayerRollProps {
     data: DrawSteelRollOverlayData;
     isVisible: boolean;
 }
-
-const EMPTY_ARRAY: string[] = [];
 
 export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
     data,
@@ -42,75 +28,15 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
 
     const modifier = data.modifier;
 
-    const diceIds = useRollOverlayStore((s) => s.diceIds ?? EMPTY_ARRAY);
-
-    const hideCanvas = useRollOverlayStore((s) => s.hideCanvas);
-
-    const modifierRef = useRef<HTMLDivElement>(null);
-
     const { elementRef, show, hide } = useGsapToggle({
         from: { duration: 0.75, y: 50, opacity: 0, ease: "expo.out" },
         to: { duration: 0.75, y: 0, opacity: 1 },
-        onHidden: () => {
-            hideCanvas();
-        },
-        onUpdate: () => {
-            const y = gsap.getProperty(elementRef.current, "y") as number;
-            const opacity = gsap.getProperty(
-                elementRef.current,
-                "opacity"
-            ) as number;
-            diceIds.forEach((id, index) => {
-                const mesh = diceBoxManager.getDie(id);
-                if (mesh) {
-                    const wiggleEnded = mesh.userData.wiggleEnded;
-
-                    if (wiggleEnded) {
-                        mesh.position.y =
-                            mesh.userData.baseDomY -
-                            Number(
-                                getDiceOffsetCoordinates(index, diceIds.length)
-                                    .top
-                            ) *
-                                2 -
-                            y * 2;
-                        mesh.position.x =
-                            mesh.userData.baseDomX -
-                            Number(
-                                getDiceOffsetCoordinates(index, diceIds.length)
-                                    .left
-                            ) *
-                                2;
-                    } else {
-                        mesh.position.y = mesh.userData.baseDomY - y * 2;
-                    }
-                }
-                if (mesh?.material) {
-                    const mat = mesh.material as Material & {
-                        opacity?: number;
-                        transparent?: boolean;
-                    };
-                    if ("opacity" in mat) {
-                        mat.transparent = true;
-                        mat.opacity = opacity;
-                    }
-                }
-            });
-        },
-        withDiceBox: foundry.utils.randomID(),
     });
 
     useEffect(() => {
         if (isVisible) show();
         else hide();
     }, [isVisible, show, hide]);
-
-    useDiceAnimation2(
-        diceIds,
-        data.dice,
-        data.id,
-        modifierRef
-    );
 
     const actorMaskStyle = {
         maskImage: `url('/modules/${MODULE_ID}/assets/player-roll-border-mask.svg')`,
@@ -140,7 +66,6 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                 <PlayerRollBorder className="absolute left-1/2 top-1/2 h-[112px] w-[112px] -translate-x-1/2 -translate-y-1/2 opacity-90" color={color} />
                 {modifier !== 0 && (
                     <div
-                        ref={modifierRef}
                         className="absolute right-[8px] bottom-[8px] z-20 rounded-sm border border-white/30 bg-black/80 px-1.5 py-0.5 font-black text-base"
                     >
                         {modifier > 0 ? `+${modifier}` : modifier}

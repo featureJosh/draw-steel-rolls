@@ -1,10 +1,13 @@
-import { diceBoxManager } from "@/managers/dice-box-manager";
 import {
     getOverlayBackground,
     getOverlayDisplayDuration,
 } from "@/settings/overlay";
-import { getDiceOffsetCoordinates } from "@/utils/dice-offset-coordinates";
-import { Material } from "three";
+import { Dice3D } from "@/types/dsn";
+import {
+    getStationaryDiceOptions,
+    installStationaryDicePatch,
+} from "@/utils/dsn-stationary-roll";
+import { warn } from "@/utils/logging";
 import { create } from "zustand";
 
 export interface DrawSteelRollDieView {
@@ -33,14 +36,18 @@ export interface DrawSteelRollOverlayData {
     isNat20: boolean;
     background: string;
     user: User;
+    nativeRoll: Roll;
+    speaker?: ChatMessage["speaker"];
 }
 
 interface RollOverlayState {
     current: DrawSteelRollOverlayData | null;
     shouldShow: boolean;
+    resultsRevealed: boolean;
     diceIds: string[];
     canvasVisible: boolean;
     show: (roll: DrawSteelRollOverlayData, diceIds: string[]) => void;
+    revealResults: () => void;
     hide: () => void;
     clear: () => void;
     hideCanvas: () => void;
@@ -49,6 +56,7 @@ interface RollOverlayState {
 export const useRollOverlayStore = create<RollOverlayState>((set) => ({
     current: null,
     shouldShow: false,
+    resultsRevealed: false,
     diceIds: [],
     canvasVisible: false,
 
@@ -57,14 +65,18 @@ export const useRollOverlayStore = create<RollOverlayState>((set) => ({
             current: roll,
             diceIds,
             shouldShow: true,
+            resultsRevealed: false,
             canvasVisible: diceIds.length > 0,
         }),
+
+    revealResults: () => set({ resultsRevealed: true }),
 
     hide: () => set({ shouldShow: false }),
 
     clear: () =>
         set({
             current: null,
+            resultsRevealed: false,
             diceIds: [],
             canvasVisible: false,
         }),
@@ -108,84 +120,66 @@ async function drainOverlayQueue() {
 }
 
 async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background">) {
-    const state = useRollOverlayStore.getState();
-    await Promise.all(state.diceIds.map((id) => diceBoxManager.removeDie(id)));
-
-    const diceIds = await spawnRollBoxDice(data);
+    const startedAt = Date.now();
+    const diceAnimation = showDiceSoNiceRoll(data);
 
     useRollOverlayStore.getState().show(
         {
             ...data,
             background: getOverlayBackground(),
         },
-        diceIds
+        []
     );
 
     const displayDuration = getOverlayDisplayDuration();
-    await sleep(displayDuration);
+    await diceAnimation;
+    useRollOverlayStore.getState().revealResults();
+
+    const elapsed = Date.now() - startedAt;
+    await sleep(Math.max(0, displayDuration - elapsed));
 
     useRollOverlayStore.getState().hide();
     await sleep(1000);
 
-    const ids = useRollOverlayStore.getState().diceIds;
-    await Promise.all(ids.map((id) => diceBoxManager.removeDie(id)));
     useRollOverlayStore.getState().clear();
 }
 
-function getDieOffsets(n: number): number[] {
-    if (n <= 1) return [0];
-    if (n === 2) return [-58, 58];
+function showDiceSoNiceRoll(data: Omit<DrawSteelRollOverlayData, "background">) {
+    const dice3d = (game as any).dice3d as
+        | { show?: Dice3D["show"] }
+        | undefined;
 
-    const arr: number[] = [];
-    const mid = (n - 1) / 2;
-    for (let i = 0; i < n; i++) arr.push((i - mid) * 82);
-    return arr;
-}
+    if (!dice3d?.show) {
+        warn("Dice So Nice show API is unavailable; skipping 3D dice animation.");
+        return Promise.resolve(false);
+    }
 
-async function spawnRollBoxDice(
-    data: Omit<DrawSteelRollOverlayData, "background">
-): Promise<string[]> {
-    const diceIds: string[] = [];
-    const baseY = 265;
-    const offsets = getDieOffsets(data.dice.length);
+    installStationaryDicePatch();
 
-    await Promise.all(
-        data.dice.map(async (die, index) => {
-            const id = `${data.id}-${index}-${foundry.utils.randomID()}`;
-            const { top, left } = getDiceOffsetCoordinates(index, data.dice.length);
-            const mesh = await diceBoxManager
-                .spawnDie(id, "d10", data.user, {
-                    x: offsets[index] + left * 2,
-                    y: baseY + top * 2,
-                })
-                .catch(() => undefined);
-
-            if (!mesh) return;
-            mesh.result = die.value;
-            mesh.userData.baseDomX = offsets[index] + left * 2;
-            mesh.userData.baseDomY = baseY + top * 2;
-            mesh.userData.rollValue = die.value;
-            mesh.userData.active = die.active;
-            setMaterialOpacity(mesh.material, 0);
-            diceIds.push(id);
-        })
-    );
-
-    return diceIds;
-}
-
-function setMaterialOpacity(material: Material | Material[], opacity: number) {
-    const materials = Array.isArray(material) ? material : [material];
-    materials.forEach((mat) => {
-        const transparentMat = mat as Material & {
-            opacity?: number;
-            transparent?: boolean;
-        };
-        if ("opacity" in transparentMat) {
-            transparentMat.transparent = true;
-            transparentMat.opacity = opacity;
-        }
-    });
+    return dice3d
+        .show(
+            {
+                throws: [
+                    {
+                        dice: data.dice.map((die, index) => ({
+                            result: die.value,
+                            resultLabel: die.value,
+                            type: "d10",
+                            vectors: [],
+                            options: getStationaryDiceOptions(index, data.dice.length),
+                        })),
+                    },
+                ],
+            },
+            data.user,
+            false,
+            null,
+            false
+        )
+        .catch((error: unknown) => {
+            warn("Dice So Nice failed to show the Draw Steel roll", error);
+            return false;
+        });
 }
 
 function sleep(ms: number) {

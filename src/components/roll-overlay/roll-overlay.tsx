@@ -1,13 +1,13 @@
 import { useRollOverlayStore } from "@/stores/roll-overlay-store";
 import React, { useEffect, useState } from "react";
 import { useGsapToggle } from "../../hooks/use-gsap-toggle";
-import { DiceCanvas } from "./dice-canvas";
 import { RollOverlayInfo } from "./roll-overlay-info";
 import { RollOverlayPlayerRoll } from "./roll-overlay-player-roll";
 
 export const RollOverlay: React.FC = () => {
     const current = useRollOverlayStore((s) => s.current);
     const shouldShow = useRollOverlayStore((s) => s.shouldShow);
+    const resultsRevealed = useRollOverlayStore((s) => s.resultsRevealed);
 
     const [phase, setPhase] = useState<"hidden" | "visible">("hidden");
 
@@ -47,7 +47,6 @@ export const RollOverlay: React.FC = () => {
 
     return (
         <>
-            <DiceCanvas />
             <div
                 ref={bgRef}
                 className={`absolute left-0 top-0 inset-0 w-full h-full pointer-events-none ${
@@ -60,7 +59,11 @@ export const RollOverlay: React.FC = () => {
                 } flex-col justify-center items-center font-[BeaufortforLOL] text-white`}
             >
                 <div className="flex flex-col items-center justify-center text-center gap-[10px]">
-                    <RollOverlayInfo data={current} ref={elementRef} />
+                    <RollOverlayInfo
+                        data={current}
+                        resultsRevealed={resultsRevealed}
+                        ref={elementRef}
+                    />
                     {current && (
                         <div className="flex flex-row justify-center items-center">
                             <div className="mx-[4px]">
@@ -68,6 +71,7 @@ export const RollOverlay: React.FC = () => {
                                     key={current.id}
                                     data={current}
                                     isVisible={shouldShow}
+                                    resultsRevealed={resultsRevealed}
                                 />
                             </div>
                         </div>

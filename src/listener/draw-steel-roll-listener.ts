@@ -41,10 +41,10 @@ function extractNativeTestRoll(message: ChatMessage) {
     if ((message as any).blind && !game.user?.isGM) return null;
     if ((message as any).type !== "standard") return null;
 
+    // Draw Steel uses part type "test" for characteristic tests and "abilityResult" (etc.)
+    // for item/ability power rolls; gate on ds.rolls.PowerRoll below, not on part.type.
     const parts = getMessageParts((message as any).system?.parts);
     for (const part of parts) {
-        if (part?.type !== "test") continue;
-
         const rolls = Array.isArray(part.rolls) ? part.rolls : [];
         for (let rollIndex = rolls.length - 1; rollIndex >= 0; rollIndex--) {
             const roll = rolls[rollIndex];

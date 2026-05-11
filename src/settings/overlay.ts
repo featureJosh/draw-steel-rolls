@@ -37,17 +37,6 @@ export function registerOverlaySettings() {
         },
     });
 
-    game.settings!.register(MODULE_ID, "screenDiceEnabled", {
-        name: "Allow Dice So Nice Screen Dice",
-        hint: "Allow the native Dice So Nice chat-roll animation behind the cinematic overlay. When disabled, the module suppresses those screen dice and shows only the roll-box dice.",
-        scope: "client",
-        config: true,
-        type: Boolean,
-        default: false,
-        onChange: (value) => {
-            Hooks.call(`${MODULE_ID}.screenDiceEnabled`, !!value);
-        },
-    });
 }
 
 export function isOverlayEnabled(): boolean {
@@ -62,8 +51,4 @@ export function getOverlayDisplayDuration(): number {
     const value = Number(game.settings!.get(MODULE_ID, "displayDurationMs"));
     if (!Number.isFinite(value)) return DEFAULT_OVERLAY_DURATION_MS;
     return Math.max(value, MIN_OVERLAY_DURATION_MS);
-}
-
-export function isScreenDiceEnabled(): boolean {
-    return !!game.settings!.get(MODULE_ID, "screenDiceEnabled");
 }

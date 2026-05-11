@@ -2,12 +2,6 @@ import {
     getOverlayBackground,
     getOverlayDisplayDuration,
 } from "@/settings/overlay";
-import { Dice3D } from "@/types/dsn";
-import {
-    getStationaryDiceOptions,
-    installStationaryDicePatch,
-} from "@/utils/dsn-stationary-roll";
-import { warn } from "@/utils/logging";
 import { create } from "zustand";
 
 export interface DrawSteelRollDieView {
@@ -121,7 +115,6 @@ async function drainOverlayQueue() {
 
 async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background">) {
     const startedAt = Date.now();
-    const diceAnimation = showDiceSoNiceRoll(data);
 
     useRollOverlayStore.getState().show(
         {
@@ -132,7 +125,6 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
     );
 
     const displayDuration = getOverlayDisplayDuration();
-    await diceAnimation;
     useRollOverlayStore.getState().revealResults();
 
     const elapsed = Date.now() - startedAt;
@@ -142,45 +134,6 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
     await sleep(1000);
 
     useRollOverlayStore.getState().clear();
-}
-
-function showDiceSoNiceRoll(data: Omit<DrawSteelRollOverlayData, "background">) {
-    const dice3d = (game as any).dice3d as
-        | { show?: Dice3D["show"] }
-        | undefined;
-
-    if (!dice3d?.show) {
-        warn("Dice So Nice show API is unavailable; skipping 3D dice animation.");
-        return Promise.resolve(false);
-    }
-
-    installStationaryDicePatch();
-
-    return dice3d
-        .show(
-            {
-                throws: [
-                    {
-                        dice: data.dice.map((die, index) => ({
-                            result: die.value,
-                            resultLabel: die.value,
-                            type: "d10",
-                            vectors: [],
-                            options: getStationaryDiceOptions(index, data.dice.length),
-                        })),
-                    },
-                ],
-            },
-            data.user,
-            false,
-            null,
-            false,
-            data.speaker
-        )
-        .catch((error: unknown) => {
-            warn("Dice So Nice failed to show the Draw Steel roll", error);
-            return false;
-        });
 }
 
 function sleep(ms: number) {

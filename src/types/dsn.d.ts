@@ -102,15 +102,6 @@ declare class Dice3D {
         speaker?: ChatMessage["speaker"]
     ): Promise<boolean>;
 
-    show(
-        data: Dice3DShowData,
-        user?: User,
-        synchronize?: boolean,
-        whisper?: Array<{ id: string } | string> | null,
-        blind?: boolean,
-        speaker?: ChatMessage["speaker"] | null
-    ): Promise<boolean>;
-
     addSystem(
         data: { id: string; name: string },
         mode: "preferred" | "default"
@@ -136,22 +127,6 @@ interface Dice3DExports {
         prepareColorsetList: () => Record<string, Record<string, string>>;
         prepareSystemList: () => Record<string, string>;
     };
-}
-
-interface Dice3DShowData {
-    throws: Array<Dice3DThrows>;
-}
-
-interface Dice3DThrows {
-    dice: Array<DiceResult>;
-}
-
-interface DiceResult {
-    result: number;
-    resultLabel: number | string;
-    type: string;
-    vectors: Array<unknown>;
-    options: unknown;
 }
 
 interface DicePresetData {

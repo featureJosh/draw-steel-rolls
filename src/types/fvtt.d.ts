@@ -4,7 +4,6 @@ declare module "fvtt-types/configuration" {
         "draw-steel-rolls.overlayEnabled": boolean;
         "draw-steel-rolls.background": string;
         "draw-steel-rolls.displayDurationMs": number;
-        "draw-steel-rolls.screenDiceEnabled": boolean;
         "draw-steel-rolls.border-color": string | undefined;
     }
 
@@ -25,7 +24,6 @@ declare module "fvtt-types/configuration" {
             "draw-steel-rolls.border-color": (
                 value: string | undefined
             ) => void;
-            "draw-steel-rolls.screenDiceEnabled": (value: boolean) => void;
         }
     }
 }

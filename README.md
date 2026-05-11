@@ -4,7 +4,7 @@
 
 This module is intentionally a visual wrapper. Draw Steel owns the roll mechanics, Power Roll dialogs, `/test` enrichers, test request chat parts, hero-token rerolls, tiers, and outcome logic. This module listens for native Draw Steel test chat messages and renders an overlay from the `PowerRoll` data already produced by the system.
 
-This project is derived from [aeris-bg3-rolls](https://gitlab.com/aeris-fvtt/aeris-bg3-rolls) on GitLab—a fork of that codebase, adapted for Draw Steel instead of Baldur’s Gate 3 / D&D 5e.
+This project is derived from [aeris-bg3-rolls](https://gitlab.com/aeris-fvtt/aeris-bg3-rolls) on GitLab, a fork of that codebase, adapted for Draw Steel.
 
 ## Features
 

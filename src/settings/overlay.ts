@@ -38,8 +38,8 @@ export function registerOverlaySettings() {
     });
 
     game.settings!.register(MODULE_ID, "screenDiceEnabled", {
-        name: "Show 3D Screen Dice",
-        hint: "Spawn Dice So Nice dice on the screen during the cinematic overlay. When disabled, only the roll card dice are shown.",
+        name: "Allow Dice So Nice Screen Dice",
+        hint: "Allow the native Dice So Nice chat-roll animation behind the cinematic overlay. When disabled, the module suppresses those screen dice and shows only the roll-box dice.",
         scope: "client",
         config: true,
         type: Boolean,

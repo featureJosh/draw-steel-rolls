@@ -2,7 +2,6 @@ import { diceBoxManager } from "@/managers/dice-box-manager";
 import {
     getOverlayBackground,
     getOverlayDisplayDuration,
-    isScreenDiceEnabled,
 } from "@/settings/overlay";
 import { getDiceOffsetCoordinates } from "@/utils/dice-offset-coordinates";
 import { Material } from "three";
@@ -112,9 +111,7 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
     const state = useRollOverlayStore.getState();
     await Promise.all(state.diceIds.map((id) => diceBoxManager.removeDie(id)));
 
-    const diceIds = isScreenDiceEnabled()
-        ? await spawnScreenDice(data)
-        : [];
+    const diceIds = await spawnRollBoxDice(data);
 
     useRollOverlayStore.getState().show(
         {
@@ -145,7 +142,7 @@ function getDieOffsets(n: number): number[] {
     return arr;
 }
 
-async function spawnScreenDice(
+async function spawnRollBoxDice(
     data: Omit<DrawSteelRollOverlayData, "background">
 ): Promise<string[]> {
     const diceIds: string[] = [];

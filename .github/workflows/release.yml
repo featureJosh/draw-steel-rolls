@@ -39,7 +39,7 @@ jobs:
               run: pnpm lint
 
             - name: Production build
-              run: pnpm run ci
+              run: pnpm run build:ci
 
             - name: Set manifest version from tag
               env:

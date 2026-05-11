@@ -18,6 +18,10 @@ declare module "fvtt-types/configuration" {
                 chatMessageId: string,
                 config: { willTrigger3DRoll: boolean }
             ) => void;
+            diceSoNiceMessagePreProcess: (
+                chatMessageId: string,
+                config: { willTrigger3DRoll: boolean }
+            ) => void;
             "draw-steel-rolls.border-color": (
                 value: string | undefined
             ) => void;

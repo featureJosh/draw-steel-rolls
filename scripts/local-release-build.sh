@@ -9,7 +9,7 @@ cd "$ROOT"
 echo "Running type-check, lint, and ci (vite build + inject-id)..."
 pnpm type-check
 pnpm lint
-pnpm ci
+pnpm build:ci
 
 echo ""
 echo "Build output: $ROOT/dist/"

@@ -1,4 +1,7 @@
-import { isOverlayEnabled } from "@/settings/overlay";
+import {
+    isOverlayEnabled,
+    isScreenDiceEnabled,
+} from "@/settings/overlay";
 import {
     DrawSteelRollDieView,
     showRollOverlay,
@@ -21,6 +24,17 @@ export function setupDrawSteelRollListener() {
     Hooks.on("updateChatMessage", (message) => {
         void handleChatMessage(message);
     });
+
+    Hooks.on("diceSoNiceMessagePreProcess", (messageId, interception) => {
+        if (!isOverlayEnabled() || isScreenDiceEnabled()) return;
+
+        const message = game.messages?.get(messageId);
+        if (!message) return;
+
+        if (extractNativePowerRoll(message, { remember: false })) {
+            interception.willTrigger3DRoll = false;
+        }
+    });
 }
 
 async function handleChatMessage(message: ChatMessage) {
@@ -36,7 +50,10 @@ async function handleChatMessage(message: ChatMessage) {
     }
 }
 
-function extractNativePowerRoll(message: ChatMessage) {
+function extractNativePowerRoll(
+    message: ChatMessage,
+    { remember = true }: { remember?: boolean } = {}
+) {
     if (!message.isContentVisible) return null;
     if ((message as any).blind && !game.user?.isGM) return null;
     if ((message as any).type !== "standard") return null;
@@ -50,11 +67,11 @@ function extractNativePowerRoll(message: ChatMessage) {
 
             const partId = String(part.id ?? part._id ?? "test");
             const key = `${message.uuid}.${partId}.${rollIndex}`;
-            if (animatedRolls.has(key)) continue;
+            if (remember && animatedRolls.has(key)) continue;
 
             const dice = getDice(roll);
             if (!dice.length) continue;
-            rememberAnimatedRoll(key);
+            if (remember) rememberAnimatedRoll(key);
 
             const actor = getSpeakerActor(message);
             const naturalResult =

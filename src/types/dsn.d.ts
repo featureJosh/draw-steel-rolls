@@ -107,7 +107,8 @@ declare class Dice3D {
         user?: User,
         synchronize?: boolean,
         whisper?: Array<{ id: string } | string> | null,
-        blind?: boolean
+        blind?: boolean,
+        speaker?: ChatMessage["speaker"] | null
     ): Promise<boolean>;
 
     addSystem(

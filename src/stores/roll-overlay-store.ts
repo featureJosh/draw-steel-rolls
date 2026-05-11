@@ -174,7 +174,8 @@ function showDiceSoNiceRoll(data: Omit<DrawSteelRollOverlayData, "background">) 
             data.user,
             false,
             null,
-            false
+            false,
+            data.speaker
         )
         .catch((error: unknown) => {
             warn("Dice So Nice failed to show the Draw Steel roll", error);

@@ -12,11 +12,13 @@ import { PlayerRollBorder } from "../svg/player-roll-border";
 interface RollOverlayPlayerRollProps {
     data: DrawSteelRollOverlayData;
     isVisible: boolean;
+    resultsRevealed: boolean;
 }
 
 export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
     data,
     isVisible,
+    resultsRevealed,
 }) => {
     const [color, setColor] = useState<string | undefined>(
         game.settings!.get(MODULE_ID, "border-color") ?? "#ffffff"
@@ -64,7 +66,7 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                     />
                 )}
                 <PlayerRollBorder className="absolute left-1/2 top-1/2 h-[112px] w-[112px] -translate-x-1/2 -translate-y-1/2 opacity-90" color={color} />
-                {modifier !== 0 && (
+                {resultsRevealed && modifier !== 0 && (
                     <div
                         className="absolute right-[8px] bottom-[8px] z-20 rounded-sm border border-white/30 bg-black/80 px-1.5 py-0.5 font-black text-base"
                     >
@@ -73,14 +75,14 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                 )}
             </div>
 
-            <BoonLabel netBoon={data.netBoon} />
+            {resultsRevealed && <BoonLabel netBoon={data.netBoon} />}
 
             <div className="max-w-full truncate text-center text-[16px] font-bold leading-none text-white z-[12]">
                 {data.actorName ?? ""}
             </div>
 
             <div className="flex items-center justify-center gap-2 z-[13]">
-                {data.dice.map((die, index) => {
+                {resultsRevealed && data.dice.map((die, index) => {
                     const icon = !die.active ? (
                         <DieIgnored className="h-[18px] w-[16px]" />
                     ) : null;
@@ -102,7 +104,7 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                         </div>
                     );
                 })}
-                <div className="relative flex h-10 min-w-14 items-center justify-center rounded-sm border border-white/30 bg-white/90 px-2 text-[20px] font-black leading-none text-black">
+                {resultsRevealed && <div className="relative flex h-10 min-w-14 items-center justify-center rounded-sm border border-white/30 bg-white/90 px-2 text-[20px] font-black leading-none text-black">
                     {data.netBoon > 0 && (
                         <span className="absolute -left-2 -top-2 z-[15] drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
                             <DieAdvantage className="h-[20px] w-[18px]" />
@@ -114,16 +116,16 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                         </span>
                     )}
                     {data.total}
-                </div>
+                </div>}
             </div>
 
-            <div className="text-center text-[12px] font-semibold uppercase tracking-normal text-white/75">
+            {resultsRevealed && <div className="text-center text-[12px] font-semibold uppercase tracking-normal text-white/75">
                 {data.dice.map((die) => die.value).join(" + ")}
                 {data.modifier !== 0 &&
                     ` ${data.modifier > 0 ? "+" : "-"} ${Math.abs(data.modifier)}`}
                 {" = "}
                 {data.total}
-            </div>
+            </div>}
         </div>
     );
 };

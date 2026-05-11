@@ -156,14 +156,9 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
 
             <div className="flex items-center justify-center gap-2 z-[13]">
                 {data.dice.map((die, index) => {
-                    let icon: React.ReactNode = null;
-                    if (!die.active) {
-                        icon = <DieIgnored className="h-[18px] w-[16px]" />;
-                    } else if (data.netBoon > 0) {
-                        icon = <DieAdvantage className="h-[20px] w-[18px]" />;
-                    } else if (data.netBoon < 0) {
-                        icon = <DieDisadvantage className="h-[20px] w-[18px]" />;
-                    }
+                    const icon = !die.active ? (
+                        <DieIgnored className="h-[18px] w-[16px]" />
+                    ) : null;
 
                     return (
                         <div
@@ -182,7 +177,17 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                         </div>
                     );
                 })}
-                <div className="flex h-10 min-w-14 items-center justify-center rounded-sm border border-white/30 bg-white/90 px-2 text-[20px] font-black leading-none text-black">
+                <div className="relative flex h-10 min-w-14 items-center justify-center rounded-sm border border-white/30 bg-white/90 px-2 text-[20px] font-black leading-none text-black">
+                    {data.netBoon > 0 && (
+                        <span className="absolute -left-2 -top-2 z-[15] drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+                            <DieAdvantage className="h-[20px] w-[18px]" />
+                        </span>
+                    )}
+                    {data.netBoon < 0 && (
+                        <span className="absolute -left-2 -top-2 z-[15] drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+                            <DieDisadvantage className="h-[20px] w-[18px]" />
+                        </span>
+                    )}
                     {data.total}
                 </div>
             </div>

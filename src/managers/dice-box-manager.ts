@@ -23,7 +23,7 @@ class DiceBoxManager {
         this.factory = new DiceFactoryCtor();
 
         const config = foundry.utils.deepClone(getDice3d().box.config);
-        config.scale = 75;
+        config.scale = 50;
         config.autoscale = false;
         config.boxType = "shared-dice-box";
 

@@ -126,7 +126,6 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
             className="relative flex w-[260px] min-h-[190px] flex-col items-center justify-start gap-2 rounded-sm border border-white/20 bg-black/45 px-4 pt-3 pb-4 shadow-[0_12px_24px_rgba(0,0,0,0.35)] pointer-events-auto"
         >
             <div className="relative flex h-[108px] w-[120px] items-center justify-center">
-                <BoonLabel netBoon={data.netBoon} />
                 {data.actorImg && (
                     <img
                         className="absolute left-1/2 top-1/2 z-10 h-[86px] w-[86px] -translate-x-1/2 -translate-y-1/2 object-cover object-center opacity-70"
@@ -145,6 +144,8 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
                     </div>
                 )}
             </div>
+
+            <BoonLabel netBoon={data.netBoon} />
 
             <div className="max-w-full truncate text-center text-[16px] font-bold leading-none text-white z-[12]">
                 {data.actorName ?? ""}
@@ -182,11 +183,22 @@ const BoonLabel: React.FC<{ netBoon: number }> = ({ netBoon }) => {
     if (!netBoon) return null;
 
     const count = Math.abs(netBoon);
-    const label = netBoon > 0 ? (count === 1 ? "Edge" : "Edges") : count === 1 ? "Bane" : "Banes";
+    const isEdge = netBoon > 0;
+    const label = isEdge ? (count === 1 ? "Edge" : "Edges") : count === 1 ? "Bane" : "Banes";
 
     return (
-        <div className="absolute left-1/2 top-[-8px] -translate-x-1/2 z-[14] rounded-sm border border-white/30 bg-black/70 px-1.5 py-0.5 text-[11px] font-black uppercase tracking-normal">
-            {count} {label}
+        <div
+            className={cn(
+                "z-[14] flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[11px] font-black uppercase leading-none tracking-normal shadow-[0_4px_12px_rgba(0,0,0,0.35)]",
+                isEdge
+                    ? "border-emerald-300/70 bg-emerald-500/20 text-emerald-100"
+                    : "border-rose-300/70 bg-rose-500/20 text-rose-100"
+            )}
+        >
+            <span className={cn("h-2 w-2 rounded-full", isEdge ? "bg-emerald-300" : "bg-rose-300")} />
+            <span>
+                {count} {label}
+            </span>
         </div>
     );
 };

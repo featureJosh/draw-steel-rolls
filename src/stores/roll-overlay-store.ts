@@ -112,7 +112,7 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
     await Promise.all(state.diceIds.map((id) => diceBoxManager.removeDie(id)));
 
     const diceIds: string[] = [];
-    const baseY = -405;
+    const baseY = 265;
     const offsets = getDieOffsets(data.dice.length);
 
     await Promise.all(
@@ -158,11 +158,11 @@ async function playRollOverlay(data: Omit<DrawSteelRollOverlayData, "background"
 
 function getDieOffsets(n: number): number[] {
     if (n <= 1) return [0];
-    if (n === 2) return [-128, 128];
+    if (n === 2) return [-58, 58];
 
     const arr: number[] = [];
     const mid = (n - 1) / 2;
-    for (let i = 0; i < n; i++) arr.push((i - mid) * 192);
+    for (let i = 0; i < n; i++) arr.push((i - mid) * 82);
     return arr;
 }
 

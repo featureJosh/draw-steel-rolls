@@ -19,6 +19,7 @@ export interface DrawSteelRollOverlayData {
     rollIndex: number;
     title: string;
     flavor: string;
+    rollType: string;
     actorName: string;
     actorImg?: string;
     dice: DrawSteelRollDieView[];

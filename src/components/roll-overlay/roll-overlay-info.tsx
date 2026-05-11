@@ -24,6 +24,7 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
                     img: "",
                     text: "",
                     type: "",
+                    rollType: "",
                     tier: "",
                     total: "",
                     natural: "",
@@ -42,6 +43,7 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
                 img: data.background,
                 text: data.title || "Draw Steel Test",
                 type: data.flavor || data.actorName,
+                rollType: data.rollType,
                 tier,
                 total: String(data.total),
                 natural,
@@ -83,10 +85,13 @@ export const RollOverlayInfo = forwardRef<HTMLDivElement, Props>(
                         />
                     ))}
                 <div className="absolute text-white z-[11] h-[300px] w-[300px]">
-                    <div className="w-[220px] absolute font-bold text-[32px] left-1/2 top-[78px] -translate-x-1/2 -translate-y-1/2 leading-none">
+                    <div className="w-[220px] absolute font-bold text-[30px] left-1/2 top-[72px] -translate-x-1/2 -translate-y-1/2 leading-none">
                         {prompt.text}
                     </div>
-                    <div className="w-[220px] absolute font-semibold text-[22px] left-1/2 top-[156px] -translate-x-1/2 -translate-y-1/2 leading-tight">
+                    <div className="w-[220px] absolute font-semibold text-[14px] uppercase tracking-normal left-1/2 top-[126px] -translate-x-1/2 -translate-y-1/2 opacity-80">
+                        {prompt.rollType}
+                    </div>
+                    <div className="w-[235px] absolute font-semibold text-[19px] left-1/2 top-[162px] -translate-x-1/2 -translate-y-1/2 leading-tight">
                         {prompt.type}
                     </div>
                     <div className="w-[200px] absolute font-semibold text-[18px] left-1/2 top-[222px] -translate-x-1/2 -translate-y-1/2">

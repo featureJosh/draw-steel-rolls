@@ -26,7 +26,7 @@ export function setupDrawSteelRollListener() {
 async function handleChatMessage(message: ChatMessage) {
     if (!isOverlayEnabled()) return;
 
-    const data = extractNativeTestRoll(message);
+    const data = extractNativePowerRoll(message);
     if (!data) return;
 
     try {
@@ -36,16 +36,14 @@ async function handleChatMessage(message: ChatMessage) {
     }
 }
 
-function extractNativeTestRoll(message: ChatMessage) {
+function extractNativePowerRoll(message: ChatMessage) {
     if (!message.isContentVisible) return null;
     if ((message as any).blind && !game.user?.isGM) return null;
     if ((message as any).type !== "standard") return null;
 
-    // Draw Steel uses part type "test" for characteristic tests and "abilityResult" (etc.)
-    // for item/ability power rolls; gate on ds.rolls.PowerRoll below, not on part.type.
     const parts = getMessageParts((message as any).system?.parts);
     for (const part of parts) {
-        const rolls = Array.isArray(part.rolls) ? part.rolls : [];
+        const rolls = getRolls(part.rolls);
         for (let rollIndex = rolls.length - 1; rollIndex >= 0; rollIndex--) {
             const roll = rolls[rollIndex];
             if (!isPowerRoll(roll)) continue;
@@ -71,6 +69,7 @@ function extractNativeTestRoll(message: ChatMessage) {
                 rollIndex,
                 title: getRollTitle(message, part, roll),
                 flavor: String(part.flavor ?? (roll as any).options?.flavor ?? ""),
+                rollType: getRollTypeLabel(part, roll),
                 actorName: actor?.name ?? message.alias ?? "Unknown",
                 actorImg: actor?.img ? String(actor.img) : undefined,
                 dice,
@@ -121,6 +120,27 @@ function getMessageParts(parts: unknown): any[] {
     return [];
 }
 
+function getRolls(rolls: unknown): Roll[] {
+    if (!rolls) return [];
+    if (Array.isArray(rolls)) return rolls as Roll[];
+    if (rolls instanceof Map) return Array.from(rolls.values()) as Roll[];
+
+    if (typeof (rolls as any).values === "function") {
+        return Array.from((rolls as any).values()) as Roll[];
+    }
+
+    if (Array.isArray((rolls as any).contents)) {
+        return (rolls as any).contents as Roll[];
+    }
+
+    if (typeof (rolls as any).contents === "object") {
+        return Object.values((rolls as any).contents) as Roll[];
+    }
+
+    if (typeof rolls === "object") return Object.values(rolls) as Roll[];
+    return [];
+}
+
 function isPowerRoll(roll: unknown): roll is Roll {
     if (!roll || typeof roll !== "object") return false;
 
@@ -153,7 +173,34 @@ function getRollTitle(message: ChatMessage, part: any, roll: Roll): string {
         return `${localized} Test`;
     }
 
-    return String((message as any).title ?? part.flavor ?? "Draw Steel Test");
+    const abilityName = getAbilityName(part);
+    if (abilityName) return abilityName;
+
+    return String((message as any).title ?? part.flavor ?? (roll as any).options?.flavor ?? "Power Roll");
+}
+
+function getRollTypeLabel(part: any, roll: Roll): string {
+    if (part?.type === "abilityResult") return "Ability Power Roll";
+    if (part?.type === "test") return "Test";
+
+    const type = String((roll as any).options?.type ?? "");
+    if (type === "ability") return "Ability Power Roll";
+    if (type === "test") return "Test";
+
+    return "Power Roll";
+}
+
+function getAbilityName(part: any): string | null {
+    const uuid = part?.abilityUuid;
+    if (typeof uuid !== "string") return null;
+
+    try {
+        const item = fromUuidSync(uuid);
+        const name = (item as { name?: unknown } | null)?.name;
+        return typeof name === "string" ? name : null;
+    } catch {
+        return null;
+    }
 }
 
 function getRollCharacteristic(roll: Roll): string | null {

@@ -113,55 +113,68 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
         maskImage: `url('/modules/${MODULE_ID}/assets/player-roll-border-mask.svg')`,
         maskRepeat: "no-repeat",
         maskPosition: "center",
+        maskSize: "contain",
         WebkitMaskImage: `url('/modules/${MODULE_ID}/assets/player-roll-border-mask.svg')`,
         WebkitMaskRepeat: "no-repeat",
         WebkitMaskPosition: "center",
+        WebkitMaskSize: "contain",
     };
 
     return (
-        <>
-            <div
-                className="flex items-center justify-center relative w-[120px] h-[120px] pointer-events-auto"
-            >
-                <div ref={elementRef}>
-                    <BoonLabel netBoon={data.netBoon} />
-                    {data.actorImg && (
-                        <img
-                            className="absolute object-cover opacity-60 z-10"
-                            style={actorMaskStyle}
-                            src={data.actorImg}
-                        />
-                    )}
-                    <PlayerRollBorder className="opacity-80" color={color} />
-                    {modifier !== 0 && (
-                        <div
-                            ref={modifierRef}
-                            className={cn(
-                                "absolute top-[80px] left-[86px] -translate-x-1/2 rounded-sm font-black text-base z-20 px-0.5"
-                            )}
-                        >
-                            {modifier > 0 ? `+${modifier}` : modifier}
-                        </div>
-                    )}
-                    <div className="absolute left-1/2 top-[115px] -translate-x-1/2 -translate-y-1/2 text-[15px] font-bold text-center text-white z-[12]">
-                        {data.actorName?.split(" ")[0] ?? ""}
+        <div
+            ref={elementRef}
+            className="relative flex w-[260px] min-h-[190px] flex-col items-center justify-start gap-2 rounded-sm border border-white/20 bg-black/45 px-4 pt-3 pb-4 shadow-[0_12px_24px_rgba(0,0,0,0.35)] pointer-events-auto"
+        >
+            <div className="relative flex h-[108px] w-[120px] items-center justify-center">
+                <BoonLabel netBoon={data.netBoon} />
+                {data.actorImg && (
+                    <img
+                        className="absolute left-1/2 top-1/2 z-10 h-[86px] w-[86px] -translate-x-1/2 -translate-y-1/2 object-cover object-center opacity-70"
+                        style={actorMaskStyle}
+                        src={data.actorImg}
+                        alt=""
+                    />
+                )}
+                <PlayerRollBorder className="absolute left-1/2 top-1/2 h-[112px] w-[112px] -translate-x-1/2 -translate-y-1/2 opacity-90" color={color} />
+                {modifier !== 0 && (
+                    <div
+                        ref={modifierRef}
+                        className="absolute right-[8px] bottom-[8px] z-20 rounded-sm border border-white/30 bg-black/80 px-1.5 py-0.5 font-black text-base"
+                    >
+                        {modifier > 0 ? `+${modifier}` : modifier}
                     </div>
-                    <div className="absolute left-1/2 top-[138px] -translate-x-1/2 flex gap-1 z-[13]">
-                        {data.dice.map((die, index) => (
-                            <div
-                                key={`${data.id}-die-${index}`}
-                                className={cn(
-                                    "h-6 min-w-6 px-1 rounded-sm border border-white/40 bg-black/70 text-xs font-black flex items-center justify-center",
-                                    !die.active && "opacity-45 line-through"
-                                )}
-                            >
-                                {die.value}
-                            </div>
-                        ))}
+                )}
+            </div>
+
+            <div className="max-w-full truncate text-center text-[16px] font-bold leading-none text-white z-[12]">
+                {data.actorName ?? ""}
+            </div>
+
+            <div className="flex items-center justify-center gap-2 z-[13]">
+                {data.dice.map((die, index) => (
+                    <div
+                        key={`${data.id}-die-${index}`}
+                        className={cn(
+                            "flex h-10 min-w-10 items-center justify-center rounded-sm border border-white/50 bg-black/75 px-2 text-[20px] font-black leading-none shadow-[0_6px_12px_rgba(0,0,0,0.35)]",
+                            !die.active && "opacity-45 line-through"
+                        )}
+                    >
+                        {die.value}
                     </div>
+                ))}
+                <div className="flex h-10 min-w-14 items-center justify-center rounded-sm border border-white/30 bg-white/90 px-2 text-[20px] font-black leading-none text-black">
+                    {data.total}
                 </div>
             </div>
-        </>
+
+            <div className="text-center text-[12px] font-semibold uppercase tracking-normal text-white/75">
+                {data.dice.map((die) => die.value).join(" + ")}
+                {data.modifier !== 0 &&
+                    ` ${data.modifier > 0 ? "+" : "-"} ${Math.abs(data.modifier)}`}
+                {" = "}
+                {data.total}
+            </div>
+        </div>
     );
 };
 

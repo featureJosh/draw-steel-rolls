@@ -17,6 +17,17 @@ import { RollOverlayInfo } from "./roll-overlay-info";
 import { RollOverlayPlayerRoll } from "./roll-overlay-player-roll";
 import { RollOverlaySetupPanel } from "./roll-overlay-setup-panel";
 
+const OVERLAY_BACKDROP_OPACITY = 0.88;
+const OVERLAY_BASE_Z_INDEX = 100;
+const OVERLAY_Z_INDEX_OFFSET = 1;
+const FOUNDRY_WINDOW_SELECTOR = [
+    "#ui-windows > .app",
+    "#ui-windows > .window-app",
+    "#ui-windows > .application",
+    "body > .app.window-app",
+    "body > .application",
+].join(", ");
+
 export const RollOverlay: React.FC = () => {
     const current = useRollOverlayStore((s) => s.current);
     const shouldShow = useRollOverlayStore((s) => s.shouldShow);
@@ -59,7 +70,7 @@ export const RollOverlay: React.FC = () => {
         hide: hideBg,
     } = useGsapToggle({
         from: { opacity: 0, ease: "expo.out" },
-        to: { opacity: 0.75 },
+        to: { opacity: OVERLAY_BACKDROP_OPACITY },
     });
 
     useEffect(() => {
@@ -70,6 +81,39 @@ export const RollOverlay: React.FC = () => {
             playHide();
             hideBg();
         }
+    }, [shouldShow]);
+
+    useEffect(() => {
+        const root = document.querySelector<HTMLElement>(
+            "draw-steel-rolls-react-root"
+        );
+        if (!root) return;
+
+        if (!shouldShow) {
+            root.style.zIndex = "";
+            return;
+        }
+
+        const syncZIndex = () => {
+            const zIndex = getTopFoundryWindowZIndex() + OVERLAY_Z_INDEX_OFFSET;
+            const next = String(zIndex);
+            if (root.style.zIndex !== next) root.style.zIndex = next;
+        };
+
+        syncZIndex();
+
+        const observer = new MutationObserver(syncZIndex);
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ["class", "style"],
+            childList: true,
+            subtree: true,
+        });
+
+        return () => {
+            observer.disconnect();
+            root.style.zIndex = "";
+        };
     }, [shouldShow]);
 
     useEffect(() => {
@@ -170,4 +214,19 @@ function isSetupOverlay(
     data: DrawSteelRollOverlayData
 ): data is DrawSteelRollSetupOverlayData {
     return data.phase === "setup" || data.phase === "rolling";
+}
+
+function getTopFoundryWindowZIndex(): number {
+    return Array.from(
+        document.querySelectorAll<HTMLElement>(FOUNDRY_WINDOW_SELECTOR)
+    ).reduce(
+        (topZIndex, element) =>
+            Math.max(topZIndex, getNumericZIndex(element)),
+        OVERLAY_BASE_Z_INDEX
+    );
+}
+
+function getNumericZIndex(element: HTMLElement): number {
+    const value = Number.parseInt(window.getComputedStyle(element).zIndex, 10);
+    return Number.isFinite(value) ? value : OVERLAY_BASE_Z_INDEX;
 }

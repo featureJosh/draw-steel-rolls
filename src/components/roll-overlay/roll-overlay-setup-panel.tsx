@@ -2,6 +2,7 @@ import { MODULE_ID } from "@/config/constants";
 import { useGsapToggle } from "@/hooks/use-gsap-toggle";
 import { useHookEvent } from "@/hooks/use-hook-event";
 import { cn } from "@/lib/utils";
+import { isCleanRollConfigurationDialogEnabled } from "@/settings/overlay";
 import {
     DrawSteelRollSetupOverlayData,
     PowerRollModifiers,
@@ -29,10 +30,14 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
     const [color, setColor] = useState<string | undefined>(
         game.settings!.get(MODULE_ID, "border-color") ?? "#ff8a1f"
     );
+    const [cleanDialog, setCleanDialog] = useState(
+        isCleanRollConfigurationDialogEnabled()
+    );
 
     useHookEvent(`${MODULE_ID}.border-color`, (value) => {
         if (value) setColor(value);
     });
+    useHookEvent(`${MODULE_ID}.cleanRollConfigurationDialog`, setCleanDialog);
 
     const adjustModifier = useRollOverlayStore((s) => s.adjustSetupModifier);
     const setSkill = useRollOverlayStore((s) => s.setSetupSkill);
@@ -58,7 +63,10 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
     return (
         <div
             ref={elementRef}
-            className="dsr-setup-panel"
+            className={cn(
+                "dsr-setup-panel",
+                cleanDialog && "dsr-setup-panel--clean"
+            )}
             style={{ ["--accent" as any]: accent }}
         >
             <svg className="dsr-setup-panel__corner dsr-setup-panel__corner--tl" viewBox="8 15 70 60" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">

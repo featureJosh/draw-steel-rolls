@@ -4,6 +4,7 @@ export const DEFAULT_BACKGROUND = `/modules/${MODULE_ID}/assets/roll_bg_2.webm`;
 export const DEFAULT_OVERLAY_DURATION_MS = 9000;
 export const MIN_OVERLAY_DURATION_MS = 7000;
 export const DEFAULT_SETUP_LAYOUT = "card";
+export const DEFAULT_CLEAN_ROLL_CONFIGURATION_DIALOG = true;
 
 export type OverlaySetupLayout = "card" | "panel";
 
@@ -57,6 +58,21 @@ export function registerOverlaySettings() {
             Hooks.call(`${MODULE_ID}.setupLayout`, normalizeSetupLayout(value));
         },
     });
+
+    game.settings!.register(MODULE_ID, "cleanRollConfigurationDialog", {
+        name: "Clean Roll Configuration Dialog",
+        hint: "Remove the background, border, and shadow from the separate roll configuration panel.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: DEFAULT_CLEAN_ROLL_CONFIGURATION_DIALOG,
+        onChange: (value) => {
+            Hooks.call(
+                `${MODULE_ID}.cleanRollConfigurationDialog`,
+                Boolean(value)
+            );
+        },
+    });
 }
 
 export function isOverlayEnabled(): boolean {
@@ -75,6 +91,12 @@ export function getOverlayDisplayDuration(): number {
 
 export function getOverlaySetupLayout(): OverlaySetupLayout {
     return normalizeSetupLayout(game.settings!.get(MODULE_ID, "setupLayout"));
+}
+
+export function isCleanRollConfigurationDialogEnabled(): boolean {
+    return Boolean(
+        game.settings!.get(MODULE_ID, "cleanRollConfigurationDialog")
+    );
 }
 
 function normalizeSetupLayout(value: unknown): OverlaySetupLayout {

@@ -13,6 +13,12 @@
     font-family: BeaufortforLOL,system-ui,sans-serif;
 }
 
+.dsr-setup-panel--clean {
+    background: unset;
+    border: unset;
+    box-shadow: unset;
+}
+
 .dsr-setup-panel__corner {
     position: absolute;
     width: 70px;

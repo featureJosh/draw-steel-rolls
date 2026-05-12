@@ -61,10 +61,26 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
             className="dsr-setup-panel"
             style={{ ["--accent" as any]: accent }}
         >
-            <CornerSvg className="dsr-setup-panel__corner dsr-setup-panel__corner--tl" />
-            <CornerSvg className="dsr-setup-panel__corner dsr-setup-panel__corner--tr" />
-            <CornerSvg className="dsr-setup-panel__corner dsr-setup-panel__corner--bl" />
-            <CornerSvg className="dsr-setup-panel__corner dsr-setup-panel__corner--br" />
+            <svg className="dsr-setup-panel__corner dsr-setup-panel__corner--tl" viewBox="8 15 70 60" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill="currentColor" d="M19 30.382 30.5 36l-5.079-11.5c-1.771 2.401-3.724 4.208-6.421 5.882" />
+                <path fill="currentColor" d="M19 24.5v5.882c2.697-1.674 4.65-3.48 6.421-5.882z" />
+                <path d="M23 54c-6.426 3.343-8.21 8.01-9 20V33c1.932-.881 3.57-1.73 5-2.618M50.5 26c6.188-5.661 10.495-6.314 18.5-6.5H28.5c-1.04 1.94-2.028 3.575-3.079 5M19 30.382V24.5h6.421M19 30.382 30.5 36l-5.079-11.5M19 30.382c2.697-1.674 4.65-3.48 6.421-5.882" />
+            </svg>
+            <svg className="dsr-setup-panel__corner dsr-setup-panel__corner--tr" viewBox="274 15 70 60" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill="currentColor" d="M333.5 30.382 322 36l5.079-11.5c1.771 2.401 3.724 4.208 6.421 5.882" />
+                <path fill="currentColor" d="M333.5 24.5v5.882c-2.697-1.674-4.65-3.48-6.421-5.882z" />
+                <path d="M329.5 54c6.426 3.343 8.21 8.01 9 20V33c-1.932-.881-3.57-1.73-5-2.618M302 26c-6.188-5.661-10.495-6.314-18.5-6.5H324c1.041 1.94 2.028 3.575 3.079 5m6.421 5.882V24.5h-6.421m6.421 5.882L322 36l5.079-11.5m6.421 5.882c-2.697-1.674-4.65-3.48-6.421-5.882" />
+            </svg>
+            <svg className="dsr-setup-panel__corner dsr-setup-panel__corner--bl" viewBox="8 318 70 60" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill="currentColor" d="M18.5 364.118 30 358.5 24.921 370c-1.771-2.401-3.724-4.208-6.421-5.882" />
+                <path fill="currentColor" d="M18.5 370v-5.882c2.697 1.674 4.65 3.481 6.421 5.882z" />
+                <path d="M22.5 340.5c-6.426-3.343-8.21-8.009-9-20v41c1.932.881 3.57 1.731 5 2.618M50 368.5c6.188 5.662 10.495 6.314 18.5 6.5H28c-1.04-1.94-2.028-3.575-3.079-5m-6.421-5.882V370h6.421m-6.421-5.882L30 358.5 24.921 370m-6.421-5.882c2.697 1.674 4.65 3.481 6.421 5.882" />
+            </svg>
+            <svg className="dsr-setup-panel__corner dsr-setup-panel__corner--br" viewBox="274 318 70 60" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill="currentColor" d="M333.5 364.118 322 358.5l5.079 11.5c1.771-2.401 3.724-4.208 6.421-5.882" />
+                <path fill="currentColor" d="M333.5 370v-5.882c-2.697 1.674-4.65 3.481-6.421 5.882z" />
+                <path d="M329.5 340.5c6.426-3.343 8.21-8.009 9-20v41c-1.932.881-3.57 1.731-5 2.618M302 368.5c-6.188 5.662-10.495 6.314-18.5 6.5H324c1.041-1.94 2.028-3.575 3.079-5m6.421-5.882V370h-6.421m6.421-5.882L322 358.5l5.079 11.5m6.421-5.882c-2.697 1.674-4.65 3.481-6.421 5.882" />
+            </svg>
 
             <button
                 type="button"
@@ -199,21 +215,6 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
         </div>
     );
 };
-
-const CornerSvg: React.FC<{ className: string }> = ({ className }) => (
-    <svg
-        className={className}
-        viewBox="10 17 62 60"
-        fill="none"
-        stroke="currentColor"
-        xmlns="http://www.w3.org/2000/svg"
-    >
-        <path fill="currentColor" d="M19 30.382 30.5 36l-5.079-11.5c-1.771 2.401-3.724 4.208-6.421 5.882" />
-        <path fill="currentColor" d="M19 24.5v5.882c2.697-1.674 4.65-3.48 6.421-5.882z" />
-        <path d="M23 54c-6.426 3.343-8.21 8.01-9 20V33c1.932-.881 3.57-1.73 5-2.618M50.5 26c6.188-5.661 10.495-6.314 18.5-6.5H28.5c-1.04 1.94-2.028 3.575-3.079 5" />
-        <path d="M19 30.382V24.5h6.421M19 30.382 30.5 36l-5.079-11.5M19 30.382c2.697-1.674 4.65-3.48 6.421-5.882" />
-    </svg>
-);
 
 const HIDDEN_MESSAGE_MODES = new Set(["ic"]);
 

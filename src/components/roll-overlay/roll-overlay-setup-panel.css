@@ -3,32 +3,27 @@
     position: relative;
     width: 360px;
     max-width: calc(100vw - 24px);
-    padding: 16px 18px 18px;
+    padding: 1.5em;
     color: #fff;
-    background:
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.06), transparent 38%),
-        linear-gradient(180deg, rgba(28, 28, 26, 0.96), rgba(10, 10, 9, 0.98));
+    background: radial-gradient(circle at 50% 0%,rgba(255,255,255,.06),transparent 38%),linear-gradient(180deg,#1c1c1af5,#0a0a09fa);
     border: 1px solid var(--accent);
     border-radius: 6px;
-    box-shadow:
-        0 14px 36px rgba(0, 0, 0, 0.55),
-        0 0 22px color-mix(in srgb, var(--accent) 18%, transparent),
-        inset 0 0 28px rgba(255, 255, 255, 0.03);
+    box-shadow: 0 14px 36px #0000008c,0 0 22px color-mix(in srgb,var(--accent) 18%,transparent),inset 0 0 28px #ffffff08;
     pointer-events: auto;
-    font-family: "BeaufortforLOL", system-ui, sans-serif;
+    font-family: BeaufortforLOL,system-ui,sans-serif;
 }
 
 .dsr-setup-panel__corner {
     position: absolute;
-    width: 62px;
+    width: 70px;
     height: 60px;
     color: var(--accent);
     pointer-events: none;
 }
 .dsr-setup-panel__corner--tl { top: -4px; left: -4px; }
-.dsr-setup-panel__corner--tr { top: -4px; right: -4px; transform: scaleX(-1); transform-origin: right top; }
-.dsr-setup-panel__corner--bl { bottom: -4px; left: -4px; transform: scaleY(-1); transform-origin: left bottom; }
-.dsr-setup-panel__corner--br { bottom: -4px; right: -4px; transform: scale(-1, -1); transform-origin: right bottom; }
+.dsr-setup-panel__corner--tr { top: -4px; right: -4px; }
+.dsr-setup-panel__corner--bl { bottom: -4px; left: -4px; }
+.dsr-setup-panel__corner--br { bottom: -4px; right: -4px; }
 
 .dsr-setup-panel__close {
     position: absolute;

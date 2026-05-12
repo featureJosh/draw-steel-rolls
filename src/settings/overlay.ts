@@ -1,8 +1,8 @@
 import { MODULE_ID } from "@/config/constants";
 
 export const DEFAULT_BACKGROUND = `/modules/${MODULE_ID}/assets/roll_bg_2.webm`;
-export const DEFAULT_OVERLAY_DURATION_MS = 9000;
-export const MIN_OVERLAY_DURATION_MS = 7000;
+export const DEFAULT_OVERLAY_DURATION_MS = 6000;
+export const MIN_OVERLAY_DURATION_MS = 3000;
 export const DEFAULT_SETUP_LAYOUT = "card";
 export const DEFAULT_CLEAN_ROLL_CONFIGURATION_DIALOG = true;
 

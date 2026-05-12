@@ -20,6 +20,7 @@ import { RollOverlaySetupPanel } from "./roll-overlay-setup-panel";
 const OVERLAY_BACKDROP_OPACITY = 0.88;
 const OVERLAY_BASE_Z_INDEX = 100;
 const OVERLAY_Z_INDEX_OFFSET = 1;
+const PANEL_SETUP_SLOT_MIN_HEIGHT = 390;
 const FOUNDRY_WINDOW_SELECTOR = [
     "#ui-windows > .app",
     "#ui-windows > .window-app",
@@ -46,8 +47,13 @@ export const RollOverlay: React.FC = () => {
     const [phase, setPhase] = useState<"hidden" | "visible">("hidden");
     const [setupLayout, setSetupLayout] =
         useState<OverlaySetupLayout>(getOverlaySetupLayout());
+    const [reservePanelSetupSlot, setReservePanelSetupSlot] = useState(false);
 
     useHookEvent(`${MODULE_ID}.setupLayout`, setSetupLayout);
+
+    const usesPanelSetup =
+        !!current && isSetupOverlay(current) && setupLayout === "panel";
+    const hasLowerOverlay = !!current && (usesPanelSetup || isResultOverlay(current));
 
     const {
         elementRef,
@@ -82,6 +88,20 @@ export const RollOverlay: React.FC = () => {
             hideBg();
         }
     }, [shouldShow]);
+
+    useEffect(() => {
+        if (usesPanelSetup) {
+            setReservePanelSetupSlot(true);
+            return;
+        }
+
+        if (current && isSetupOverlay(current)) {
+            setReservePanelSetupSlot(false);
+            return;
+        }
+
+        if (!current || !shouldShow) setReservePanelSetupSlot(false);
+    }, [current, shouldShow, usesPanelSetup]);
 
     useEffect(() => {
         const root = document.querySelector<HTMLElement>(
@@ -173,10 +193,16 @@ export const RollOverlay: React.FC = () => {
                         resultsRevealed={resultsRevealed}
                         ref={elementRef}
                     />
-                    {current &&
-                        isSetupOverlay(current) &&
-                        setupLayout === "panel" && (
-                            <div className="flex flex-row justify-center items-center">
+                    {hasLowerOverlay && (
+                        <div
+                            className="flex flex-row justify-center items-start"
+                            style={
+                                reservePanelSetupSlot
+                                    ? { minHeight: PANEL_SETUP_SLOT_MIN_HEIGHT }
+                                    : undefined
+                            }
+                        >
+                            {usesPanelSetup && current && isSetupOverlay(current) && (
                                 <div className="mx-[4px]">
                                     <RollOverlaySetupPanel
                                         key={`${current.id}-setup-panel`}
@@ -184,18 +210,17 @@ export const RollOverlay: React.FC = () => {
                                         isVisible={shouldShow}
                                     />
                                 </div>
-                            </div>
-                        )}
-                    {current && isResultOverlay(current) && (
-                        <div className="flex flex-row justify-center items-center">
-                            <div className="mx-[4px]">
-                                <RollOverlayPlayerRoll
-                                    key={current.id}
-                                    data={current}
-                                    isVisible={shouldShow}
-                                    resultsRevealed={resultsRevealed}
-                                />
-                            </div>
+                            )}
+                            {current && isResultOverlay(current) && (
+                                <div className="mx-[4px]">
+                                    <RollOverlayPlayerRoll
+                                        key={current.id}
+                                        data={current}
+                                        isVisible={shouldShow}
+                                        resultsRevealed={resultsRevealed}
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

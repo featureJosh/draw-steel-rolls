@@ -3,7 +3,7 @@
     position: relative;
     width: 360px;
     max-width: calc(100vw - 24px);
-    padding: 1.5em;
+    padding: 1.75em;
     color: #fff;
     background: radial-gradient(circle at 50% 0%,rgba(255,255,255,.06),transparent 38%),linear-gradient(180deg,#1c1c1af5,#0a0a09fa);
     border: 1px solid var(--accent);

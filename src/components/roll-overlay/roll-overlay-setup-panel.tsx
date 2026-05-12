@@ -61,10 +61,10 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
             className="dsr-setup-panel"
             style={{ ["--accent" as any]: accent }}
         >
-            <span className="dsr-setup-panel__corner dsr-setup-panel__corner--tl" />
-            <span className="dsr-setup-panel__corner dsr-setup-panel__corner--tr" />
-            <span className="dsr-setup-panel__corner dsr-setup-panel__corner--bl" />
-            <span className="dsr-setup-panel__corner dsr-setup-panel__corner--br" />
+            <CornerSvg className="dsr-setup-panel__corner dsr-setup-panel__corner--tl" />
+            <CornerSvg className="dsr-setup-panel__corner dsr-setup-panel__corner--tr" />
+            <CornerSvg className="dsr-setup-panel__corner dsr-setup-panel__corner--bl" />
+            <CornerSvg className="dsr-setup-panel__corner dsr-setup-panel__corner--br" />
 
             <button
                 type="button"
@@ -199,6 +199,21 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
         </div>
     );
 };
+
+const CornerSvg: React.FC<{ className: string }> = ({ className }) => (
+    <svg
+        className={className}
+        viewBox="10 17 62 60"
+        fill="none"
+        stroke="currentColor"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path fill="currentColor" d="M19 30.382 30.5 36l-5.079-11.5c-1.771 2.401-3.724 4.208-6.421 5.882" />
+        <path fill="currentColor" d="M19 24.5v5.882c2.697-1.674 4.65-3.48 6.421-5.882z" />
+        <path d="M23 54c-6.426 3.343-8.21 8.01-9 20V33c1.932-.881 3.57-1.73 5-2.618M50.5 26c6.188-5.661 10.495-6.314 18.5-6.5H28.5c-1.04 1.94-2.028 3.575-3.079 5" />
+        <path d="M19 30.382V24.5h6.421M19 30.382 30.5 36l-5.079-11.5M19 30.382c2.697-1.674 4.65-3.48 6.421-5.882" />
+    </svg>
+);
 
 const HIDDEN_MESSAGE_MODES = new Set(["ic"]);
 

@@ -20,16 +20,15 @@
 
 .dsr-setup-panel__corner {
     position: absolute;
-    width: 14px;
-    height: 14px;
-    border-color: var(--accent);
-    opacity: 0.9;
+    width: 62px;
+    height: 60px;
+    color: var(--accent);
     pointer-events: none;
 }
-.dsr-setup-panel__corner--tl { top: 4px; left: 4px; border-top: 1px solid; border-left: 1px solid; }
-.dsr-setup-panel__corner--tr { top: 4px; right: 4px; border-top: 1px solid; border-right: 1px solid; }
-.dsr-setup-panel__corner--bl { bottom: 4px; left: 4px; border-bottom: 1px solid; border-left: 1px solid; }
-.dsr-setup-panel__corner--br { bottom: 4px; right: 4px; border-bottom: 1px solid; border-right: 1px solid; }
+.dsr-setup-panel__corner--tl { top: -4px; left: -4px; }
+.dsr-setup-panel__corner--tr { top: -4px; right: -4px; transform: scaleX(-1); transform-origin: right top; }
+.dsr-setup-panel__corner--bl { bottom: -4px; left: -4px; transform: scaleY(-1); transform-origin: left bottom; }
+.dsr-setup-panel__corner--br { bottom: -4px; right: -4px; transform: scale(-1, -1); transform-origin: right bottom; }
 
 .dsr-setup-panel__close {
     position: absolute;

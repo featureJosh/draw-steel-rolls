@@ -2,6 +2,7 @@ import {
     getOverlayBackground,
     getOverlayDisplayDuration,
 } from "@/settings/overlay";
+import { isDebugModeEnabled } from "@/settings/debug-mode";
 import { create } from "zustand";
 
 export interface PowerRollModifiers {
@@ -359,6 +360,9 @@ async function playRollOverlay(data: DrawSteelRollResultInput) {
     const displayDuration = getOverlayDisplayDuration();
     await waitForDiceAnimation(data.messageId);
     useRollOverlayStore.getState().revealResults();
+
+    // Debug mode: leave overlay up until the dev manually dismisses it
+    if (isDebugModeEnabled()) return;
 
     const elapsed = Date.now() - startedAt;
     await sleep(Math.max(0, displayDuration - elapsed));

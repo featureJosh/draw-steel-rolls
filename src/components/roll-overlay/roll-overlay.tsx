@@ -4,6 +4,7 @@ import {
     getOverlaySetupLayout,
     OverlaySetupLayout,
 } from "@/settings/overlay";
+import { isDebugModeEnabled } from "@/settings/debug-mode";
 import {
     DrawSteelRollOverlayData,
     DrawSteelRollResultOverlayData,
@@ -21,6 +22,15 @@ export const RollOverlay: React.FC = () => {
     const shouldShow = useRollOverlayStore((s) => s.shouldShow);
     const resultsRevealed = useRollOverlayStore((s) => s.resultsRevealed);
     const cancelSetup = useRollOverlayStore((s) => s.cancelSetup);
+    const hide = useRollOverlayStore((s) => s.hide);
+    const clear = useRollOverlayStore((s) => s.clear);
+
+    const debugMode = isDebugModeEnabled();
+
+    const handleDebugClose = () => {
+        hide();
+        window.setTimeout(clear, 500);
+    };
 
     const [phase, setPhase] = useState<"hidden" | "visible">("hidden");
     const [setupLayout, setSetupLayout] =
@@ -86,6 +96,33 @@ export const RollOverlay: React.FC = () => {
                     phase === "visible" ? "flex" : "hidden"
                 } flex-col justify-center items-center font-[BeaufortforLOL] text-white`}
             >
+                {debugMode && phase === "visible" && (
+                    <button
+                        onClick={handleDebugClose}
+                        title="Debug: close overlay"
+                        style={{
+                            position: "absolute",
+                            top: "12px",
+                            right: "12px",
+                            zIndex: 9999,
+                            width: "32px",
+                            height: "32px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "rgba(0,0,0,0.6)",
+                            border: "1px solid rgba(255,255,255,0.35)",
+                            borderRadius: "4px",
+                            color: "white",
+                            fontSize: "16px",
+                            lineHeight: 1,
+                            cursor: "pointer",
+                            fontFamily: "sans-serif",
+                        }}
+                    >
+                        ✕
+                    </button>
+                )}
                 <div className="flex flex-col items-center justify-center text-center gap-[1.5em]">
                     <RollOverlayInfo
                         data={current}

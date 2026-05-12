@@ -1,6 +1,8 @@
 # Draw Steel Rolls
 
-**Draw Steel Rolls** adds a cinematic overlay for native Draw Steel test rolls in Foundry VTT v14.
+**Draw Steel Rolls** adds a cinematic overlay for native Draw Steel power rolls in Foundry VTT v14.
+
+<img width="400" height="366" alt="Screen Recording 2026-05-12 at 9 49 45 AM" src="https://github.com/user-attachments/assets/73ef75e6-aaf7-42a7-849f-96ee71a85add" />
 
 This project is derived from [aeris-bg3-rolls](https://gitlab.com/aeris-fvtt/aeris-bg3-rolls) on GitLab, a fork of that codebase, adapted for Draw Steel. See that repository for the original implementation and history.
 

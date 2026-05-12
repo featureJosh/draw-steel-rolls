@@ -1,0 +1,292 @@
+.dsr-setup-panel {
+    --accent: #ff8a1f;
+    position: relative;
+    width: 360px;
+    max-width: calc(100vw - 24px);
+    padding: 16px 18px 18px;
+    color: #fff;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.06), transparent 38%),
+        linear-gradient(180deg, rgba(28, 28, 26, 0.96), rgba(10, 10, 9, 0.98));
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    box-shadow:
+        0 14px 36px rgba(0, 0, 0, 0.55),
+        0 0 22px color-mix(in srgb, var(--accent) 18%, transparent),
+        inset 0 0 28px rgba(255, 255, 255, 0.03);
+    pointer-events: auto;
+    font-family: "BeaufortforLOL", system-ui, sans-serif;
+}
+
+.dsr-setup-panel__corner {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: var(--accent);
+    opacity: 0.9;
+    pointer-events: none;
+}
+.dsr-setup-panel__corner--tl { top: 4px; left: 4px; border-top: 1px solid; border-left: 1px solid; }
+.dsr-setup-panel__corner--tr { top: 4px; right: 4px; border-top: 1px solid; border-right: 1px solid; }
+.dsr-setup-panel__corner--bl { bottom: 4px; left: 4px; border-bottom: 1px solid; border-left: 1px solid; }
+.dsr-setup-panel__corner--br { bottom: 4px; right: 4px; border-bottom: 1px solid; border-right: 1px solid; }
+
+.dsr-setup-panel__close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    z-index: 2;
+}
+.dsr-setup-panel__close:hover {
+    border-color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+.dsr-setup-panel__close:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.dsr-setup-panel__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 12px;
+}
+.dsr-setup-panel__title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #fff;
+}
+.dsr-setup-panel__title-rule {
+    height: 1px;
+    width: 50px;
+}
+.dsr-setup-panel__title-rule--left {
+    background: linear-gradient(90deg, transparent, var(--accent));
+}
+.dsr-setup-panel__title-rule--right {
+    background: linear-gradient(90deg, var(--accent), transparent);
+}
+.dsr-setup-panel__title-diamond { color: var(--accent); font-size: 7px; }
+.dsr-setup-panel__title-name {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dsr-setup-panel__subtitle {
+    margin-top: 2px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+/* === Controls group === */
+.dsr-controls-group {
+}
+
+/* === Edges / Banes row === */
+.dsr-edge-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.dsr-stepper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 54px;
+    border: 1px solid;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.42);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0 8px;
+    min-width: 0;
+}
+.dsr-stepper--edge {
+    border-color: rgba(110, 231, 183, 0.55);
+    color: #d1fae5;
+}
+.dsr-stepper--edge:hover { background: rgba(16, 185, 129, 0.12); }
+.dsr-stepper--bane {
+    border-color: rgba(251, 113, 133, 0.55);
+    color: #ffe4e6;
+}
+.dsr-stepper--bane:hover { background: rgba(244, 63, 94, 0.12); }
+.dsr-stepper:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.dsr-stepper__number {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+}
+.dsr-stepper__label {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+.dsr-stepper--edge .dsr-stepper__label { color: #6ee7b7; }
+.dsr-stepper--bane .dsr-stepper__label { color: #fda4af; }
+
+/* === Bonus row === */
+.dsr-bonus-row {
+    margin-top: 8px;
+    height: 54px;
+}
+
+.dsr-bonus-main {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 0;
+    padding: 0 8px;
+}
+.dsr-bonus-main:hover {
+    border-color: rgba(255, 255, 255, 0.26);
+    background: rgba(255, 255, 255, 0.05);
+}
+.dsr-bonus-main:disabled { opacity: 0.4; cursor: not-allowed; }
+.dsr-bonus-main__value {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+}
+.dsr-bonus-main__label {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* === Skill row === */
+.dsr-skill-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    height: 32px;
+    padding: 0 10px;
+    background: rgba(0, 0, 0, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
+}
+.dsr-skill-row__icon { color: var(--accent); font-size: 12px; }
+.dsr-skill-row__label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.58);
+}
+.dsr-skill-row__select {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    outline: none;
+}
+
+/* === Visibility row === */
+.dsr-vis-row {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.dsr-vis-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.36);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+.dsr-vis-btn:hover { background: rgba(255, 255, 255, 0.06); }
+.dsr-vis-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.dsr-vis-btn--active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* === Roll button === */
+.dsr-roll-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 40px;
+    width: 100%;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    background: linear-gradient(180deg,#ff8a000d,#00000073);
+    color: #fed7aa;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s ease,box-shadow .15s ease;
+    box-shadow: 0 6px 18px #00000057,inset 0 0 16px #ffffff08;
+    padding: unset;
+}
+.dsr-roll-btn:hover {
+    background: linear-gradient(180deg, rgba(255, 138, 0, 0.16), rgba(0, 0, 0, 0.45));
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.34),
+        0 0 14px color-mix(in srgb, var(--accent) 30%, transparent),
+        inset 0 0 16px rgba(255, 255, 255, 0.05);
+}
+.dsr-roll-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.dsr-roll-btn__diamond { color: var(--accent); font-size: 11px; }

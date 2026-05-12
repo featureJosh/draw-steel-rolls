@@ -102,6 +102,7 @@
 
 /* === Controls group === */
 .dsr-controls-group {
+    display: flex;
 }
 
 /* === Edges / Banes row === */
@@ -155,25 +156,22 @@
 
 /* === Bonus row === */
 .dsr-bonus-row {
-    margin-top: 8px;
     height: 54px;
 }
 
 .dsr-bonus-main {
-    width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 3px;
-    background: rgba(0, 0, 0, 0.42);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255,255,255,.14);
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.15s ease;
-    min-width: 0;
-    padding: 0 8px;
+    transition: all .15s ease;
+    justify-content: center;
+    padding: unset;
+    align-content: center;
+    margin: unset;
+    height: 3em;
 }
 .dsr-bonus-main:hover {
     border-color: rgba(255, 255, 255, 0.26);
@@ -232,10 +230,9 @@
 
 /* === Visibility row === */
 .dsr-vis-row {
-    margin-top: 10px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    display: flex;
+    justify-content: center;
+    gap: .5em;
 }
 .dsr-vis-btn {
     display: flex;

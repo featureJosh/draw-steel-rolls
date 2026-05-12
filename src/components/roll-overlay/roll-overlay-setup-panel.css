@@ -157,6 +157,16 @@
 .dsr-stepper--edge .dsr-stepper__label { color: #6ee7b7; }
 .dsr-stepper--bane .dsr-stepper__label { color: #fda4af; }
 
+.dsr-click-hint {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.28);
+    line-height: 1;
+    pointer-events: none;
+}
+
 /* === Bonus row === */
 .dsr-bonus-row {
     display: flex;

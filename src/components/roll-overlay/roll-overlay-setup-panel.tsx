@@ -102,6 +102,10 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
                     >
                         <span className="dsr-stepper__number">{data.modifiers.edges}</span>
                         <span className="dsr-stepper__label">Edges</span>
+                        <span className="dsr-click-hint">
+                            <i className="fa-regular fa-computer-mouse-button-left" /> +
+                            <i className="fa-regular fa-computer-mouse-button-right" /> −
+                        </span>
                     </button>
                     <button
                         type="button"
@@ -116,6 +120,10 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
                     >
                         <span className="dsr-stepper__number">{data.modifiers.banes}</span>
                         <span className="dsr-stepper__label">Banes</span>
+                        <span className="dsr-click-hint">
+                            <i className="fa-regular fa-computer-mouse-button-left" /> +
+                            <i className="fa-regular fa-computer-mouse-button-right" /> −
+                        </span>
                     </button>
                 </div>
 
@@ -135,6 +143,10 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
                             {formatSigned(data.modifiers.bonuses)}
                         </span>
                         <span className="dsr-bonus-main__label">Bonuses / Penalties</span>
+                        <span className="dsr-click-hint">
+                            <i className="fa-regular fa-computer-mouse-button-left" /> +
+                            <i className="fa-regular fa-computer-mouse-button-right" /> −
+                        </span>
                     </button>
                 </div>
 

@@ -86,7 +86,7 @@ export const RollOverlay: React.FC = () => {
                     phase === "visible" ? "flex" : "hidden"
                 } flex-col justify-center items-center font-[BeaufortforLOL] text-white`}
             >
-                <div className="flex flex-col items-center justify-center text-center gap-[10px]">
+                <div className="flex flex-col items-center justify-center text-center gap-[1.5em]">
                     <RollOverlayInfo
                         data={current}
                         resultsRevealed={resultsRevealed}

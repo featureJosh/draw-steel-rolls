@@ -1,3 +1,4 @@
+import { MODULE_ID } from "@/config/constants";
 import { isOverlayEnabled } from "@/settings/overlay";
 import {
     DrawSteelRollDieView,
@@ -5,6 +6,11 @@ import {
     showRollOverlay,
 } from "@/stores/roll-overlay-store";
 import { warn } from "@/utils/logging";
+
+function isGroupRollMessage(message: ChatMessage): boolean {
+    const flags = (message as any).flags?.[MODULE_ID];
+    return !!flags?.groupRollId;
+}
 
 const animatedRolls = new Set<string>();
 const MAX_ANIMATED_ROLL_KEYS = 500;
@@ -28,6 +34,7 @@ export function setupDrawSteelRollListener() {
 
 async function handleChatMessage(message: ChatMessage) {
     if (!isOverlayEnabled()) return;
+    if (isGroupRollMessage(message)) return;
 
     const data = extractNativePowerRoll(message);
     if (!data) return;

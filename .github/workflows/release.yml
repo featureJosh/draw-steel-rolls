@@ -49,7 +49,7 @@ jobs:
                   set -euo pipefail
                   VERSION="${TAG_NAME#v}"
                   MODULE_ID="$(jq -r .id dist/module.json)"
-                  ZIP_NAME="${MODULE_ID}-${TAG_NAME}.zip"
+                  ZIP_NAME="${MODULE_ID}.zip"
                   MANIFEST_URL="https://github.com/${REPOSITORY}/releases/latest/download/module.json"
                   DOWNLOAD_URL="https://github.com/${REPOSITORY}/releases/download/${TAG_NAME}/${ZIP_NAME}"
 
@@ -68,7 +68,7 @@ jobs:
               run: |
                   set -euo pipefail
                   MODULE_ID="$(jq -r .id dist/module.json)"
-                  ZIP_NAME="${MODULE_ID}-${TAG_NAME}.zip"
+                  ZIP_NAME="${MODULE_ID}.zip"
                   NOTES="${RUNNER_TEMP}/release-notes.md"
                   CLIP="${RUNNER_TEMP}/changelog-snippet.md"
 

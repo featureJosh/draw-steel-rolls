@@ -258,6 +258,7 @@ const GroupRollPlayerCard: React.FC<{ participant: GroupParticipant }> = ({
                             ? toInt(config.edges) - toInt(config.banes)
                             : 0
                     }
+                    tier={result?.tier}
                 />
             </div>
 
@@ -308,9 +309,22 @@ const GroupRollPlayerCard: React.FC<{ participant: GroupParticipant }> = ({
 const StatusBadge: React.FC<{
     status: GroupParticipant["status"];
     netBoon: number;
-}> = ({ status, netBoon }) => {
-    const label = statusLabel(status);
-    const tone = statusTone(status);
+    tier?: number;
+}> = ({ status, netBoon, tier }) => {
+    const label = statusLabel(status, tier);
+    const tone = statusTone(status, tier);
+
+    if (status === "resolved" && tier != null) {
+        return (
+            <div className={cn(
+                "z-[14] flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[11px] font-black uppercase leading-none tracking-normal shadow-[0_4px_12px_rgba(0,0,0,0.35)]",
+                tone
+            )}>
+                <span className="h-2 w-2 rounded-full bg-white/80" />
+                <span>{`Tier ${tier}`}</span>
+            </div>
+        );
+    }
 
     if (status === "resolved" && netBoon !== 0) {
         const isEdge = netBoon > 0;
@@ -401,7 +415,17 @@ const GroupRollControls: React.FC<{
 
 function buildGroupSummary(data: {
     participants: GroupParticipant[];
+    metadata?: import("@/stores/group-roll-store").GroupRollMetadata;
 }): { headline: string; subline: string; tier: string } {
+    const meta = data.metadata;
+    const isMontage = meta?.feature === "montage";
+    const roundLine =
+        isMontage && typeof meta?.currentRound === "number"
+            ? typeof meta?.maxRounds === "number"
+                ? `Round ${meta.currentRound} / ${meta.maxRounds}`
+                : `Round ${meta.currentRound}`
+            : "";
+
     const resolved = data.participants.filter((p) => p.status === "resolved");
     if (!resolved.length) {
         const readyCount = data.participants.filter(
@@ -410,23 +434,93 @@ function buildGroupSummary(data: {
         return {
             headline: `${readyCount}/${data.participants.length}`,
             subline: "Awaiting Setup",
-            tier: "",
+            tier: roundLine,
         };
     }
 
     if (resolved.length < data.participants.length) {
         return {
-            headline: "...",
+            headline: `${resolved.length}/${data.participants.length}`,
             subline: "Rolling",
-            tier: "",
+            tier: roundLine,
+        };
+    }
+
+    if (isMontage) {
+        const summary = countMontageOutcomes(data.participants);
+        const projection = projectMontageOutcome(summary, meta);
+        return {
+            headline: `${summary.successes} / ${summary.failures}`,
+            subline:
+                summary.successes === 1 && summary.failures === 1
+                    ? "Success / Failure"
+                    : "Successes / Failures",
+            tier: projection || roundLine || "Round Complete",
         };
     }
 
     return {
         headline: "—",
         subline: "Results Ready",
-        tier: "Successes / Failures TBD",
+        tier: "",
     };
+}
+
+function countMontageOutcomes(participants: GroupParticipant[]): {
+    successes: number;
+    failures: number;
+} {
+    let successes = 0;
+    let failures = 0;
+    const thresholds: Record<string, number> = {
+        easy: 1,
+        medium: 2,
+        hard: 3,
+    };
+    for (const p of participants) {
+        const tier = p.result?.tier;
+        if (tier == null) continue;
+        const difficulty = p.result?.difficulty ?? p.config?.difficulty ?? "medium";
+        const threshold = thresholds[difficulty] ?? 2;
+        if (tier >= threshold) successes += 1;
+        else failures += 1;
+    }
+    return { successes, failures };
+}
+
+function projectMontageOutcome(
+    roundSummary: { successes: number; failures: number },
+    meta: import("@/stores/group-roll-store").GroupRollMetadata | undefined
+): string {
+    if (!meta) return "";
+    const priorSuccesses =
+        typeof meta.successes === "number" ? meta.successes : 0;
+    const priorFailures =
+        typeof meta.failures === "number" ? meta.failures : 0;
+    const successLimit =
+        typeof meta.successLimit === "number" ? meta.successLimit : null;
+    const failureLimit =
+        typeof meta.failureLimit === "number" ? meta.failureLimit : null;
+
+    const newSuccesses = priorSuccesses + roundSummary.successes;
+    const newFailures = priorFailures + roundSummary.failures;
+
+    if (successLimit != null && newSuccesses >= successLimit) {
+        return "Total Success";
+    }
+    if (failureLimit != null && newFailures >= failureLimit) {
+        return newSuccesses - newFailures >= 2
+            ? "Partial Success"
+            : "Total Failure";
+    }
+    const currentRound =
+        typeof meta.currentRound === "number" ? meta.currentRound : null;
+    const maxRounds =
+        typeof meta.maxRounds === "number" ? meta.maxRounds : null;
+    if (currentRound != null && maxRounds != null) {
+        return `Round ${currentRound} / ${maxRounds}`;
+    }
+    return "";
 }
 
 function portraitLabelFor(participant: GroupParticipant): string {
@@ -442,7 +536,10 @@ function portraitLabelFor(participant: GroupParticipant): string {
     }
 }
 
-function statusLabel(status: GroupParticipant["status"]): string {
+function statusLabel(
+    status: GroupParticipant["status"],
+    tier?: number
+): string {
     switch (status) {
         case "setup":
             return "Configuring";
@@ -451,17 +548,26 @@ function statusLabel(status: GroupParticipant["status"]): string {
         case "rolling":
             return "Rolling";
         case "resolved":
-            return "Resolved";
+            return tier != null ? `Tier ${tier}` : "Resolved";
     }
 }
 
-function statusTone(status: GroupParticipant["status"]): string {
+function statusTone(
+    status: GroupParticipant["status"],
+    tier?: number
+): string {
     switch (status) {
         case "ready":
             return "border-emerald-300/70 bg-emerald-500/20 text-emerald-100";
         case "rolling":
             return "border-amber-300/70 bg-amber-500/20 text-amber-100";
         case "resolved":
+            if (tier === 3)
+                return "border-emerald-300/70 bg-emerald-500/20 text-emerald-100";
+            if (tier === 2)
+                return "border-amber-300/70 bg-amber-500/20 text-amber-100";
+            if (tier === 1)
+                return "border-rose-300/70 bg-rose-500/20 text-rose-100";
             return "border-white/40 bg-white/15 text-white";
         default:
             return "border-white/25 bg-white/10 text-white/85";

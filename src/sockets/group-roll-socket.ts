@@ -2,6 +2,7 @@ import { MODULE_ID } from "@/config/constants";
 import {
     GroupParticipantConfig,
     GroupParticipantResult,
+    GroupRollMetadata,
     GroupRollOverlayData,
     useGroupRollStore,
 } from "@/stores/group-roll-store";
@@ -17,7 +18,14 @@ export type GroupStartPayload = {
     title: string;
     rollType: string;
     participants: GroupParticipantPayload[];
+    metadata?: GroupRollMetadata;
 };
+
+const MONTAGE_DIFFICULTY_OPTIONS = [
+    { value: "easy", label: "Easy" },
+    { value: "medium", label: "Medium" },
+    { value: "hard", label: "Hard" },
+];
 
 export type GroupParticipantPayload = {
     uuid: string;
@@ -77,6 +85,9 @@ export interface GroupParticipantFinalResult {
     bonuses: number;
     dice: number[];
     formula: string;
+    tier: number;
+    product: number;
+    difficulty: string | null;
 }
 
 function registerSocketlibHandlers() {
@@ -294,10 +305,20 @@ async function openSoloSetupIfOwned(
         }
 
         const skillOptions = buildSkillOptionsForActor(actor);
+        const isMontage = payload.metadata?.feature === "montage";
+        const difficultyOptions = isMontage
+            ? MONTAGE_DIFFICULTY_OPTIONS
+            : undefined;
+        const initialDifficulty = isMontage
+            ? (typeof payload.metadata?.difficulty === "string"
+                  ? payload.metadata.difficulty
+                  : "medium")
+            : null;
         info("openSoloSetupIfOwned: opening roll configuration UI", {
             groupId: payload.groupId,
             actorUuid: participant.uuid,
             skillOptionCount: skillOptions.length,
+            isMontage,
         });
 
         const result = await requestPowerRollSetup({
@@ -310,6 +331,8 @@ async function openSoloSetupIfOwned(
             skill: null,
             skillOptions,
             skillModifiers: {},
+            difficulty: initialDifficulty,
+            difficultyOptions,
         });
 
         if (!result) return;
@@ -330,9 +353,12 @@ async function openSoloSetupIfOwned(
 }
 
 function buildSkillOptionsForActor(actor: {
-    system?: { skills?: unknown };
+    system?: { skills?: any };
 }): { value: string; label: string; group?: string }[] {
-    const skills = actor?.system?.skills;
+    // Draw Steel actors store trained skills in `system.skills.value` (a Set).
+    // The parent `system.skills` is a schema object — using it directly returns
+    // unrelated keys ("value", etc.) instead of the actor's trained skills.
+    const skills = actor?.system?.skills?.value ?? actor?.system?.skills;
     const values = collectSkillValues(skills);
     if (!values.length) return [];
 
@@ -382,6 +408,7 @@ function promptResultToConfig(
         bonuses: modifiers.bonuses,
         skill: result.skill,
         messageMode: result.messageMode,
+        difficulty: result.difficulty ?? null,
     };
 }
 
@@ -491,6 +518,7 @@ function showGroupRollOverlay(payload: GroupStartPayload) {
         title: payload.title,
         rollType: payload.rollType,
         isGm: !!game.user?.isGM,
+        metadata: payload.metadata,
         participants: payload.participants.map((p) => {
             const config = readyConfigs?.get(p.uuid);
             return {
@@ -560,6 +588,9 @@ export async function rollAllParticipants(groupId: string) {
                 bonuses: participant.config.bonuses,
                 dice: result.view.dice.map((d) => d.value),
                 formula: result.view.formula,
+                tier: result.view.tier ?? 1,
+                product: result.view.tier ?? 1,
+                difficulty: participant.config.difficulty ?? null,
             });
 
             await sleep(400);
@@ -599,6 +630,7 @@ async function rollParticipant(
 
     const total = Number(roll.total ?? 0);
     const netBoon = toInt(config.edges) - toInt(config.banes);
+    const tier = computeTier(total);
 
     const speaker = actor
         ? ChatMessage.getSpeaker({ actor: actor as Actor })
@@ -630,11 +662,18 @@ async function rollParticipant(
             modifier,
             dice,
             netBoon,
-            tier: undefined,
+            tier,
+            difficulty: config.difficulty ?? null,
             formula: formatRollFormula(dice, modifier, total),
         },
         messageId,
     };
+}
+
+function computeTier(total: number): number {
+    if (total <= 11) return 1;
+    if (total <= 16) return 2;
+    return 3;
 }
 
 async function safeFromUuid(uuid: string): Promise<unknown | null> {

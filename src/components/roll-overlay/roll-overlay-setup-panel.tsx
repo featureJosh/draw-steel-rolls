@@ -42,6 +42,7 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
     const adjustModifier = useRollOverlayStore((s) => s.adjustSetupModifier);
     const setSkill = useRollOverlayStore((s) => s.setSetupSkill);
     const setMessageMode = useRollOverlayStore((s) => s.setSetupMessageMode);
+    const setDifficulty = useRollOverlayStore((s) => s.setSetupDifficulty);
     const submitSetup = useRollOverlayStore((s) => s.submitSetup);
     const cancelSetup = useRollOverlayStore((s) => s.cancelSetup);
 
@@ -59,6 +60,8 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
     const disabled = data.phase === "rolling";
     const accent = color ?? "#ff8a1f";
     const hasSkills = data.skillOptions.length > 0;
+    const difficultyOptions = data.difficultyOptions ?? [];
+    const hasDifficulty = difficultyOptions.length > 0;
 
     return (
         <div
@@ -161,6 +164,29 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
                         <span className="dsr-bonus-main__label">Bonuses / Penalties</span>
                     </button>
                 </div>
+
+                {hasDifficulty && (
+                    <label className="dsr-skill-row">
+                        <span className="dsr-skill-row__icon">
+                            <i className="fa-solid fa-bullseye" />
+                        </span>
+                        <span className="dsr-skill-row__label">Difficulty</span>
+                        <select
+                            className="dsr-skill-row__select"
+                            value={data.difficulty ?? ""}
+                            disabled={disabled}
+                            onChange={(event) =>
+                                setDifficulty(event.target.value || null)
+                            }
+                        >
+                            {difficultyOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                )}
 
                 {hasSkills && (
                     <label className="dsr-skill-row">

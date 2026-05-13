@@ -12,6 +12,7 @@ export interface GroupParticipantConfig {
     bonuses: number;
     skill: string | null;
     messageMode: string;
+    difficulty?: string | null;
 }
 
 export interface GroupRollDieView {
@@ -24,8 +25,21 @@ export interface GroupParticipantResult {
     modifier: number;
     dice: GroupRollDieView[];
     netBoon: number;
-    tier?: string;
+    tier?: number;
+    difficulty?: string | null;
     formula: string;
+}
+
+export interface GroupRollMetadata {
+    feature?: string;
+    difficulty?: string;
+    currentRound?: number;
+    maxRounds?: number;
+    successes?: number;
+    failures?: number;
+    successLimit?: number;
+    failureLimit?: number;
+    [key: string]: unknown;
 }
 
 export interface GroupParticipant {
@@ -44,6 +58,7 @@ export interface GroupRollOverlayData {
     rollType: string;
     isGm: boolean;
     participants: GroupParticipant[];
+    metadata?: GroupRollMetadata;
 }
 
 interface GroupRollState {

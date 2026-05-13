@@ -59,6 +59,7 @@ export async function groupRoll(
         title: input.title || "Group Roll",
         rollType: "Test",
         participants,
+        metadata: input.metadata as any,
     };
 
     return new Promise<GroupRollResult[]>((resolve) => {

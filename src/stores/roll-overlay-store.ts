@@ -23,6 +23,11 @@ export interface PowerRollSkillModifier {
     banes?: number;
 }
 
+export interface PowerRollDifficultyOption {
+    value: string;
+    label: string;
+}
+
 export interface PowerRollSetupPrompt {
     id: string;
     title: string;
@@ -34,12 +39,15 @@ export interface PowerRollSetupPrompt {
     skill: string | null;
     skillOptions: PowerRollSkillOption[];
     skillModifiers: Record<string, PowerRollSkillModifier>;
+    difficulty?: string | null;
+    difficultyOptions?: PowerRollDifficultyOption[];
 }
 
 export interface PowerRollPromptResult {
     rolls: [PowerRollModifiers];
     skill: string | null;
     messageMode: string;
+    difficulty: string | null;
 }
 
 export interface DrawSteelRollDieView {
@@ -63,6 +71,8 @@ export interface DrawSteelRollSetupOverlayData extends OverlayBase {
     skill: string | null;
     skillOptions: PowerRollSkillOption[];
     skillModifiers: Record<string, PowerRollSkillModifier>;
+    difficulty?: string | null;
+    difficultyOptions?: PowerRollDifficultyOption[];
 }
 
 export interface DrawSteelRollResultOverlayData extends OverlayBase {
@@ -106,6 +116,7 @@ interface RollOverlayState {
     adjustSetupModifier: (key: keyof PowerRollModifiers, delta: number) => void;
     setSetupSkill: (skill: string | null) => void;
     setSetupMessageMode: (messageMode: string) => void;
+    setSetupDifficulty: (difficulty: string | null) => void;
     submitSetup: () => void;
     cancelSetup: () => void;
     setResolved: (roll: DrawSteelRollResultInput) => void;
@@ -228,6 +239,20 @@ export const useRollOverlayStore = create<RollOverlayState>((set, get) => ({
         });
     },
 
+    setSetupDifficulty: (difficulty) => {
+        set((state) => {
+            const current = state.current;
+            if (!current || current.phase !== "setup") return state;
+
+            return {
+                current: {
+                    ...current,
+                    difficulty: difficulty || null,
+                },
+            };
+        });
+    },
+
     submitSetup: () => {
         const current = get().current;
         if (!current || current.phase !== "setup") return;
@@ -236,6 +261,7 @@ export const useRollOverlayStore = create<RollOverlayState>((set, get) => ({
             rolls: [normalizeModifiers(current.modifiers)],
             skill: current.skill || null,
             messageMode: current.messageMode ?? getDefaultMessageMode(),
+            difficulty: current.difficulty ?? null,
         };
 
         const prompt = activePrompt;

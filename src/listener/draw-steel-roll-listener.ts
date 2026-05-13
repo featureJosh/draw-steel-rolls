@@ -1,5 +1,5 @@
 import { MODULE_ID } from "@/config/constants";
-import { isOverlayEnabled } from "@/settings/overlay";
+import { isShiftIntentActive } from "@/overrides/power-roll-dialog";
 import {
     DrawSteelRollDieView,
     DrawSteelRollResultInput,
@@ -33,7 +33,7 @@ export function setupDrawSteelRollListener() {
 }
 
 async function handleChatMessage(message: ChatMessage) {
-    if (!isOverlayEnabled()) return;
+    if (!isShiftIntentActive()) return;
     if (isGroupRollMessage(message)) return;
 
     const data = extractNativePowerRoll(message);

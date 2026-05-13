@@ -3,6 +3,7 @@ import {
     getOverlayDisplayDuration,
 } from "@/settings/overlay";
 import { isDebugModeEnabled } from "@/settings/debug-mode";
+import { debug } from "@/utils/logging";
 import { create } from "zustand";
 
 export interface PowerRollModifiers {
@@ -295,6 +296,15 @@ export async function requestPowerRollSetup(
     resolveActivePrompt(null);
 
     const id = foundry.utils.randomID();
+
+    debug("Requesting power roll setup overlay", {
+        id,
+        title: prompt.title,
+        rollType: prompt.rollType,
+        actorName: prompt.actorName,
+        skillOptionCount: prompt.skillOptions.length,
+        messageMode: prompt.messageMode,
+    });
 
     return new Promise((resolve) => {
         activePrompt = { id, resolve };

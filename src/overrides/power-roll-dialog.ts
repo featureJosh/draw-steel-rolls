@@ -1,4 +1,3 @@
-import { isOverlayEnabled } from "@/settings/overlay";
 import {
     PowerRollModifiers,
     PowerRollSetupPrompt,
@@ -9,6 +8,30 @@ import {
 import { warn } from "@/utils/logging";
 
 const ORIGINAL_CREATE = Symbol.for("draw-steel-rolls.PowerRollDialog.originalCreate");
+
+const SHIFT_INTENT_WINDOW_MS = 15_000;
+let shiftIntentExpiresAt = 0;
+
+function isShiftHeld(): boolean {
+    const kb = (game as any).keyboard;
+    if (!kb?.isModifierActive) return false;
+    const SHIFT =
+        (globalThis as any).foundry?.helpers?.interaction?.KeyboardManager?.MODIFIER_KEYS
+            ?.SHIFT ?? "Shift";
+    try {
+        return !!kb.isModifierActive(SHIFT);
+    } catch {
+        return false;
+    }
+}
+
+function markShiftIntent() {
+    shiftIntentExpiresAt = Date.now() + SHIFT_INTENT_WINDOW_MS;
+}
+
+export function isShiftIntentActive(): boolean {
+    return Date.now() < shiftIntentExpiresAt;
+}
 
 type PowerRollDialogCreate = (
     this: unknown,
@@ -38,9 +61,11 @@ export function setupPowerRollDialogOverride() {
         this: unknown,
         options: DrawSteelPowerRollDialogOptions = {}
     ) {
-        if (this !== PowerRollDialog || !isOverlayEnabled()) {
+        if (this !== PowerRollDialog || !isShiftHeld()) {
             return originalCreate.call(this, options) as Promise<DrawSteelPowerRollPromptValue | null>;
         }
+
+        markShiftIntent();
 
         try {
             return await requestPowerRollSetup(buildSetupPrompt(options));

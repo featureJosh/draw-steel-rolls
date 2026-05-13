@@ -6,15 +6,6 @@ export const MIN_OVERLAY_DURATION_MS = 3000;
 export const DEFAULT_CLEAN_ROLL_CONFIGURATION_DIALOG = true;
 
 export function registerOverlaySettings() {
-    game.settings!.register(MODULE_ID, "overlayEnabled", {
-        name: "Enable Draw Steel Roll Overlay",
-        hint: "Show the cinematic overlay when native Draw Steel test rolls are posted to chat.",
-        scope: "client",
-        config: true,
-        type: Boolean,
-        default: true,
-    });
-
     game.settings!.register(MODULE_ID, "background", {
         name: "Roll Overlay Background",
         hint: "Image or video path used behind native Draw Steel test rolls.",
@@ -52,10 +43,6 @@ export function registerOverlaySettings() {
             );
         },
     });
-}
-
-export function isOverlayEnabled(): boolean {
-    return !!game.settings!.get(MODULE_ID, "overlayEnabled");
 }
 
 export function getOverlayBackground(): string {

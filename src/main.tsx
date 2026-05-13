@@ -11,6 +11,7 @@ import { setupGroupRollSocket } from "./sockets/group-roll-socket";
 
 Hooks.once("init", () => {
     registerSettings();
+    setupGroupRollSocket();
 });
 
 Hooks.once("ready", () => {
@@ -25,7 +26,6 @@ Hooks.once("ready", () => {
 
     setupDrawSteelRollListener();
     setupPowerRollDialogOverride();
-    setupGroupRollSocket();
 
     const module = game.modules?.get(MODULE_ID) as unknown as
         | { api?: Record<string, unknown> }

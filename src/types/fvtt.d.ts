@@ -1,7 +1,6 @@
 declare module "fvtt-types/configuration" {
     interface SettingConfig {
         "draw-steel-rolls.debugMode": boolean;
-        "draw-steel-rolls.overlayEnabled": boolean;
         "draw-steel-rolls.background": string;
         "draw-steel-rolls.displayDurationMs": number;
         "draw-steel-rolls.cleanRollConfigurationDialog": boolean;

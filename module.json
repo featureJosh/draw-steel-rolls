@@ -12,7 +12,7 @@
     ],
     "esmodules": ["main.bundle.js"],
     "styles": ["assets/main.css"],
-    "socket": false,
+    "socket": true,
     "compatibility": {
         "minimum": "14.360",
         "verified": "14"
@@ -30,6 +30,11 @@
                 "compatibility": {
                     "minimum": "1.5"
                 }
+            },
+            {
+                "id": "socketlib",
+                "type": "module",
+                "manifest": "https://github.com/farling42/foundryvtt-socketlib/releases/latest/download/module.json"
             }
         ],
         "systems": [

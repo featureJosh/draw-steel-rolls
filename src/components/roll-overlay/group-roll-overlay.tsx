@@ -2,7 +2,11 @@ import { MODULE_ID } from "@/config/constants";
 import { useGsapToggle } from "@/hooks/use-gsap-toggle";
 import { useHookEvent } from "@/hooks/use-hook-event";
 import { cn } from "@/lib/utils";
-import { rollAllParticipants } from "@/sockets/group-roll-socket";
+import {
+    cancelGroupRoll,
+    closeGroupRollOverlay,
+    rollAllParticipants,
+} from "@/sockets/group-roll-socket";
 import {
     allParticipantsReady,
     allParticipantsResolved,
@@ -93,6 +97,8 @@ export const GroupRollOverlay: React.FC = () => {
 
     if (!current) return null;
 
+    const done = allParticipantsResolved(current);
+
     return (
         <>
             <div
@@ -106,6 +112,17 @@ export const GroupRollOverlay: React.FC = () => {
                     phase === "visible" ? "flex" : "hidden"
                 } flex-col justify-center items-center font-[BeaufortforLOL] text-white`}
             >
+                {done && (
+                    <button
+                        type="button"
+                        className="pointer-events-auto absolute right-4 top-4 z-[30] flex h-10 w-10 items-center justify-center rounded-[3px] border border-white/25 bg-black/60 text-white/75 transition hover:border-white/50 hover:bg-white/10 hover:text-white"
+                        onClick={closeGroupRollOverlay}
+                        data-tooltip="Close"
+                        aria-label="Close Group Roll"
+                    >
+                        <i className="fa-solid fa-xmark" />
+                    </button>
+                )}
                 <div
                     ref={elementRef}
                     className="flex flex-col items-center justify-center text-center gap-[1.5em]"
@@ -120,10 +137,10 @@ export const GroupRollOverlay: React.FC = () => {
                         ))}
                     </div>
                     {current.isGm && (
-                        <GroupRollTriggerButton
+                        <GroupRollControls
                             groupId={current.groupId}
                             enabled={allParticipantsReady(current)}
-                            done={allParticipantsResolved(current)}
+                            done={done}
                         />
                     )}
                 </div>
@@ -340,31 +357,45 @@ const StatusBadge: React.FC<{
     );
 };
 
-const GroupRollTriggerButton: React.FC<{
+const GroupRollControls: React.FC<{
     groupId: string;
     enabled: boolean;
     done: boolean;
 }> = ({ groupId, enabled, done }) => {
-    const onClick = () => {
+    const onRoll = () => {
         if (!enabled || done) return;
         void rollAllParticipants(groupId);
     };
+    const onCancel = () => cancelGroupRoll(groupId);
 
     return (
-        <button
-            type="button"
-            className={cn(
-                "pointer-events-auto flex h-12 w-[260px] items-center justify-center gap-3 rounded-[3px] border text-[15px] font-black uppercase tracking-[0.24em] transition disabled:opacity-45",
-                enabled && !done
-                    ? "border-orange-300/70 bg-black/62 text-orange-100 shadow-[0_0_20px_rgba(255,136,0,0.16),inset_0_0_18px_rgba(255,255,255,0.04)] hover:bg-orange-300/12"
-                    : "border-white/22 bg-black/52 text-white/60"
+        <div className="flex items-center justify-center gap-2">
+            <button
+                type="button"
+                className={cn(
+                    "pointer-events-auto flex h-12 w-[260px] items-center justify-center gap-3 rounded-[3px] border text-[15px] font-black uppercase tracking-[0.24em] transition disabled:opacity-45",
+                    enabled && !done
+                        ? "border-orange-300/70 bg-black/62 text-orange-100 shadow-[0_0_20px_rgba(255,136,0,0.16),inset_0_0_18px_rgba(255,255,255,0.04)] hover:bg-orange-300/12"
+                        : "border-white/22 bg-black/52 text-white/60"
+                )}
+                onClick={onRoll}
+                disabled={!enabled || done}
+            >
+                <span className="text-[12px]">◆</span>
+                {done ? "Resolved" : "Group Roll"}
+            </button>
+            {!done && (
+                <button
+                    type="button"
+                    className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-[3px] border border-white/22 bg-black/52 text-[15px] text-white/75 transition hover:border-rose-300/60 hover:bg-rose-500/15 hover:text-rose-100"
+                    onClick={onCancel}
+                    data-tooltip="Cancel Group Roll"
+                    aria-label="Cancel Group Roll"
+                >
+                    <i className="fa-solid fa-xmark" />
+                </button>
             )}
-            onClick={onClick}
-            disabled={!enabled || done}
-        >
-            <span className="text-[12px]">◆</span>
-            {done ? "Resolved" : "Group Roll"}
-        </button>
+        </div>
     );
 };
 

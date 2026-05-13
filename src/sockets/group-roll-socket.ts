@@ -8,19 +8,18 @@ import {
 import {
     PowerRollPromptResult,
     requestPowerRollSetup,
+    useRollOverlayStore,
 } from "@/stores/roll-overlay-store";
-import { error, warn } from "@/utils/logging";
+import { debug, error, warn } from "@/utils/logging";
 
-const SOCKET_CHANNEL = `module.${MODULE_ID}`;
-
-type GroupStartPayload = {
+export type GroupStartPayload = {
     groupId: string;
     title: string;
     rollType: string;
     participants: GroupParticipantPayload[];
 };
 
-type GroupParticipantPayload = {
+export type GroupParticipantPayload = {
     uuid: string;
     name: string;
     img: string;
@@ -28,29 +27,38 @@ type GroupParticipantPayload = {
     userId: string | null;
 };
 
-type GroupReadyPayload = {
+export type GroupReadyPayload = {
     groupId: string;
     actorUuid: string;
     config: GroupParticipantConfig;
 };
 
-type GroupParticipantResolvedPayload = {
+export type GroupParticipantResolvedPayload = {
     groupId: string;
     actorUuid: string;
     result: GroupParticipantResult;
 };
 
-type GroupCancelPayload = { groupId: string };
+export type GroupCancelPayload = { groupId: string };
 
-type GroupSocketMessage =
-    | { type: "groupRoll:start"; payload: GroupStartPayload }
-    | { type: "groupRoll:ready"; payload: GroupReadyPayload }
-    | { type: "groupRoll:participantResolved"; payload: GroupParticipantResolvedPayload }
-    | { type: "groupRoll:cancel"; payload: GroupCancelPayload };
+type SocketlibSocket = {
+    register: (name: string, fn: (...args: any[]) => any) => void;
+    executeForEveryone: (name: string, ...args: any[]) => Promise<unknown>;
+    executeAsGM: (name: string, ...args: any[]) => Promise<unknown>;
+};
+
+let socket: SocketlibSocket | undefined;
 
 const groupResultResolvers = new Map<
     string,
     (results: GroupParticipantFinalResult[]) => void
+>();
+const startedSetupParticipants = new Set<string>();
+const activeGroupStarts = new Map<string, GroupStartPayload>();
+const joinedGroupIds = new Set<string>();
+const readyParticipantConfigs = new Map<
+    string,
+    Map<string, GroupParticipantConfig>
 >();
 
 export interface GroupParticipantFinalResult {
@@ -67,65 +75,93 @@ export interface GroupParticipantFinalResult {
 }
 
 export function setupGroupRollSocket() {
-    if (!game.socket) {
-        warn("game.socket unavailable; group roll sync disabled.");
-        return;
-    }
+    (Hooks as any).once("socketlib.ready", () => {
+        const lib = (globalThis as any).socketlib;
+        if (!lib?.registerModule) {
+            warn("socketlib not available; group roll sync disabled.");
+            return;
+        }
 
-    game.socket.on(SOCKET_CHANNEL, (message: GroupSocketMessage) => {
-        handleGroupSocketMessage(message);
+        socket = lib.registerModule(MODULE_ID) as SocketlibSocket;
+        socket.register("groupRoll:start", handleGroupRollStart);
+        socket.register("groupRoll:ready", handleGroupRollReady);
+        socket.register("groupRoll:participantResolved", handleGroupParticipantResolved);
+        socket.register("groupRoll:cancel", handleGroupRollCancel);
+
+        debug("socketlib group roll handlers registered", {
+            userId: game.user?.id,
+            isGm: game.user?.isGM,
+        });
     });
 }
 
-export function emitGroup(message: GroupSocketMessage) {
-    game.socket?.emit(SOCKET_CHANNEL, message);
-    handleGroupSocketMessage(message);
+function ensureSocket(): SocketlibSocket | null {
+    if (socket) return socket;
+    warn("Group roll socket not ready; message dropped.");
+    return null;
 }
 
-function handleGroupSocketMessage(message: GroupSocketMessage) {
-    switch (message.type) {
-        case "groupRoll:start":
-            return onGroupStart(message.payload);
-        case "groupRoll:ready":
-            return onGroupReady(message.payload);
-        case "groupRoll:participantResolved":
-            return onParticipantResolved(message.payload);
-        case "groupRoll:cancel":
-            return onGroupCancel(message.payload);
-    }
+export function broadcastGroupRollStart(payload: GroupStartPayload) {
+    debug("Broadcasting groupRoll:start", { groupId: payload.groupId });
+    ensureSocket()?.executeForEveryone("groupRoll:start", payload);
+    handleGroupRollStart(payload);
 }
 
-function onGroupStart(payload: GroupStartPayload) {
-    const isGm = !!game.user?.isGM;
-
-    const data: GroupRollOverlayData = {
+export function sendGroupRollReadyToGM(payload: GroupReadyPayload) {
+    debug("Sending groupRoll:ready to GM", {
         groupId: payload.groupId,
-        title: payload.title,
-        rollType: payload.rollType,
+        actorUuid: payload.actorUuid,
+    });
+    if (game.user?.isGM) {
+        handleGroupRollReady(payload);
+        return;
+    }
+    ensureSocket()?.executeAsGM("groupRoll:ready", payload);
+}
+
+export function broadcastGroupParticipantResolved(
+    payload: GroupParticipantResolvedPayload
+) {
+    debug("Broadcasting groupRoll:participantResolved", {
+        groupId: payload.groupId,
+        actorUuid: payload.actorUuid,
+    });
+    ensureSocket()?.executeForEveryone("groupRoll:participantResolved", payload);
+    handleGroupParticipantResolved(payload);
+}
+
+export function broadcastGroupRollCancel(payload: GroupCancelPayload) {
+    debug("Broadcasting groupRoll:cancel", { groupId: payload.groupId });
+    ensureSocket()?.executeForEveryone("groupRoll:cancel", payload);
+    handleGroupRollCancel(payload);
+}
+
+export function handleGroupRollStart(payload: GroupStartPayload) {
+    const isGm = !!game.user?.isGM;
+    activeGroupStarts.set(payload.groupId, payload);
+
+    debug("Received group roll start", {
+        groupId: payload.groupId,
+        userId: game.user?.id,
         isGm,
-        participants: payload.participants.map((p) => ({
-            uuid: p.uuid,
-            userId: p.userId,
-            name: p.name,
-            img: p.img,
-            status: "setup",
+        participants: payload.participants.map((participant) => ({
+            uuid: participant.uuid,
+            name: participant.name,
+            userId: participant.userId,
         })),
-    };
+    });
 
-    useGroupRollStore.getState().show(data);
+    if (isGm) {
+        showGroupRollOverlay(payload);
+        return;
+    }
 
-    if (isGm) return;
+    void openOwnedParticipantSetups(payload);
+}
 
-    const myUserId = game.user?.id;
+async function openOwnedParticipantSetups(payload: GroupStartPayload) {
     for (const participant of payload.participants) {
-        if (
-            participant.userId != null &&
-            myUserId != null &&
-            participant.userId !== myUserId
-        ) {
-            continue;
-        }
-        void openSoloSetupIfOwned(payload, participant);
+        await openSoloSetupIfOwned(payload, participant);
     }
 }
 
@@ -134,6 +170,10 @@ async function openSoloSetupIfOwned(
     participant: GroupParticipantPayload
 ) {
     try {
+        const setupKey = `${payload.groupId}.${participant.uuid}`;
+        if (startedSetupParticipants.has(setupKey)) return;
+        startedSetupParticipants.add(setupKey);
+
         const actor = (await safeFromUuid(participant.uuid)) as
             | (Actor & {
                   isOwner?: boolean;
@@ -142,11 +182,19 @@ async function openSoloSetupIfOwned(
             | null;
 
         if (!actor) {
+            startedSetupParticipants.delete(setupKey);
             warn("Group roll: actor not found locally", participant.uuid);
             return;
         }
-        if (!actor.isOwner) return;
-        if (game.user?.isGM) return;
+
+        const hasOwnerPermission = game.user
+            ? actor.testUserPermission(game.user, "OWNER")
+            : false;
+
+        if (!hasOwnerPermission || game.user?.isGM) {
+            startedSetupParticipants.delete(setupKey);
+            return;
+        }
 
         const skillOptions = buildSkillOptionsForActor(actor);
 
@@ -165,15 +213,16 @@ async function openSoloSetupIfOwned(
         if (!result) return;
 
         const config = promptResultToConfig(result);
-        emitGroup({
-            type: "groupRoll:ready",
-            payload: {
-                groupId: payload.groupId,
-                actorUuid: participant.uuid,
-                config,
-            },
+        closeSubmittedPowerRollSetup();
+        joinedGroupIds.add(payload.groupId);
+        showGroupRollOverlay(payload);
+        sendGroupRollReadyToGM({
+            groupId: payload.groupId,
+            actorUuid: participant.uuid,
+            config,
         });
     } catch (err) {
+        startedSetupParticipants.delete(`${payload.groupId}.${participant.uuid}`);
         warn("Failed to open group roll setup for participant", err);
     }
 }
@@ -234,24 +283,74 @@ function promptResultToConfig(
     };
 }
 
-function onGroupReady(payload: GroupReadyPayload) {
+export function handleGroupRollReady(payload: GroupReadyPayload) {
+    debug("Received group roll participant ready", {
+        groupId: payload.groupId,
+        actorUuid: payload.actorUuid,
+        userId: game.user?.id,
+        isGm: game.user?.isGM,
+        config: payload.config,
+    });
+    rememberReadyParticipant(payload);
+    if (!useGroupRollStore.getState().current) {
+        const startPayload = activeGroupStarts.get(payload.groupId);
+        if (
+            startPayload &&
+            (game.user?.isGM || joinedGroupIds.has(payload.groupId))
+        ) {
+            showGroupRollOverlay(startPayload);
+        }
+    }
     useGroupRollStore.getState().markReady(payload.actorUuid, payload.config);
 }
 
-function onParticipantResolved(payload: GroupParticipantResolvedPayload) {
+export function handleGroupParticipantResolved(
+    payload: GroupParticipantResolvedPayload
+) {
+    debug("Received group roll participant resolved", {
+        groupId: payload.groupId,
+        actorUuid: payload.actorUuid,
+    });
     useGroupRollStore
         .getState()
         .setResolved(payload.actorUuid, payload.result);
 }
 
-function onGroupCancel(payload: GroupCancelPayload) {
+export function handleGroupRollCancel(payload: GroupCancelPayload) {
+    debug("Received group roll cancel", { groupId: payload.groupId });
+    clearStartedSetupParticipants(payload.groupId);
+    activeGroupStarts.delete(payload.groupId);
+    joinedGroupIds.delete(payload.groupId);
+    readyParticipantConfigs.delete(payload.groupId);
     const resolver = groupResultResolvers.get(payload.groupId);
     if (resolver) {
         groupResultResolvers.delete(payload.groupId);
         resolver([]);
     }
+    const rollOverlay = useRollOverlayStore.getState();
+    if (
+        rollOverlay.current?.phase === "setup" ||
+        rollOverlay.current?.phase === "rolling"
+    ) {
+        rollOverlay.cancelSetup();
+    }
     useGroupRollStore.getState().hide();
     window.setTimeout(() => useGroupRollStore.getState().clear(), 500);
+}
+
+export function cancelGroupRoll(groupId: string) {
+    broadcastGroupRollCancel({ groupId });
+}
+
+export function closeGroupRollOverlay() {
+    useGroupRollStore.getState().hide();
+    window.setTimeout(() => useGroupRollStore.getState().clear(), 500);
+}
+
+function clearStartedSetupParticipants(groupId: string) {
+    for (const key of Array.from(startedSetupParticipants)) {
+        if (key.startsWith(`${groupId}.`)) startedSetupParticipants.delete(key);
+    }
 }
 
 export function registerGroupResultResolver(
@@ -271,6 +370,46 @@ export function resolveGroupResults(
     resolver(results);
 }
 
+function showGroupRollOverlay(payload: GroupStartPayload) {
+    const readyConfigs = readyParticipantConfigs.get(payload.groupId);
+    const data: GroupRollOverlayData = {
+        groupId: payload.groupId,
+        title: payload.title,
+        rollType: payload.rollType,
+        isGm: !!game.user?.isGM,
+        participants: payload.participants.map((p) => {
+            const config = readyConfigs?.get(p.uuid);
+            return {
+                uuid: p.uuid,
+                userId: p.userId,
+                name: p.name,
+                img: p.img,
+                status: config ? "ready" : "setup",
+                config,
+            };
+        }),
+    };
+
+    useGroupRollStore.getState().show(data);
+}
+
+function rememberReadyParticipant(payload: GroupReadyPayload) {
+    const groupReady =
+        readyParticipantConfigs.get(payload.groupId) ??
+        new Map<string, GroupParticipantConfig>();
+    groupReady.set(payload.actorUuid, payload.config);
+    readyParticipantConfigs.set(payload.groupId, groupReady);
+}
+
+function closeSubmittedPowerRollSetup() {
+    const store = useRollOverlayStore.getState();
+    const current = store.current;
+    if (current?.phase !== "rolling") return;
+
+    store.hide();
+    window.setTimeout(() => useRollOverlayStore.getState().clear(), 500);
+}
+
 export async function rollAllParticipants(groupId: string) {
     const state = useGroupRollStore.getState();
     const data = state.current;
@@ -288,13 +427,10 @@ export async function rollAllParticipants(groupId: string) {
             const result = await rollParticipant(participant.uuid, participant.config, data.title);
             useGroupRollStore.getState().setResolved(participant.uuid, result.view);
 
-            emitGroup({
-                type: "groupRoll:participantResolved",
-                payload: {
-                    groupId,
-                    actorUuid: participant.uuid,
-                    result: result.view,
-                },
+            broadcastGroupParticipantResolved({
+                groupId,
+                actorUuid: participant.uuid,
+                result: result.view,
             });
 
             finalResults.push({
@@ -317,6 +453,10 @@ export async function rollAllParticipants(groupId: string) {
     }
 
     resolveGroupResults(groupId, finalResults);
+    clearStartedSetupParticipants(groupId);
+    activeGroupStarts.delete(groupId);
+    joinedGroupIds.delete(groupId);
+    readyParticipantConfigs.delete(groupId);
 }
 
 async function rollParticipant(

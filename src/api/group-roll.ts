@@ -1,9 +1,10 @@
 import {
-    emitGroup,
+    broadcastGroupRollStart,
     GroupParticipantFinalResult,
+    GroupStartPayload,
     registerGroupResultResolver,
 } from "@/sockets/group-roll-socket";
-import { warn } from "@/utils/logging";
+import { debug, warn } from "@/utils/logging";
 
 export interface GroupRollInput {
     title: string;
@@ -43,17 +44,26 @@ export async function groupRoll(
         userId: hero.userId ?? resolveDefaultOwnerUserId(hero.uuid),
     }));
 
+    debug("Group roll requested", {
+        groupId,
+        title: input.title || "Group Roll",
+        participants: participants.map((participant) => ({
+            uuid: participant.uuid,
+            name: participant.name,
+            userId: participant.userId,
+        })),
+    });
+
+    const payload: GroupStartPayload = {
+        groupId,
+        title: input.title || "Group Roll",
+        rollType: "Test",
+        participants,
+    };
+
     return new Promise<GroupRollResult[]>((resolve) => {
         registerGroupResultResolver(groupId, resolve);
-        emitGroup({
-            type: "groupRoll:start",
-            payload: {
-                groupId,
-                title: input.title || "Group Roll",
-                rollType: "Test",
-                participants,
-            },
-        });
+        broadcastGroupRollStart(payload);
     });
 }
 

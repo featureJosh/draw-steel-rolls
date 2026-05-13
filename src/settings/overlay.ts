@@ -3,15 +3,7 @@ import { MODULE_ID } from "@/config/constants";
 export const DEFAULT_BACKGROUND = `/modules/${MODULE_ID}/assets/roll_bg_2.webm`;
 export const DEFAULT_OVERLAY_DURATION_MS = 6000;
 export const MIN_OVERLAY_DURATION_MS = 3000;
-export const DEFAULT_SETUP_LAYOUT = "card";
 export const DEFAULT_CLEAN_ROLL_CONFIGURATION_DIALOG = true;
-
-export type OverlaySetupLayout = "card" | "panel";
-
-const SETUP_LAYOUT_CHOICES: Record<OverlaySetupLayout, string> = {
-    card: "Inside Roll Card",
-    panel: "Separate Ornate Panel",
-};
 
 export function registerOverlaySettings() {
     game.settings!.register(MODULE_ID, "overlayEnabled", {
@@ -46,19 +38,6 @@ export function registerOverlaySettings() {
         },
     });
 
-    game.settings!.register(MODULE_ID, "setupLayout", {
-        name: "Roll Configuration Layout",
-        hint: "Choose whether pre-roll controls are embedded in the roll card or shown in a separate ornate panel.",
-        scope: "client",
-        config: true,
-        type: String,
-        choices: SETUP_LAYOUT_CHOICES,
-        default: DEFAULT_SETUP_LAYOUT,
-        onChange: (value) => {
-            Hooks.call(`${MODULE_ID}.setupLayout`, normalizeSetupLayout(value));
-        },
-    });
-
     game.settings!.register(MODULE_ID, "cleanRollConfigurationDialog", {
         name: "Clean Roll Configuration Dialog",
         hint: "Remove the background, border, and shadow from the separate roll configuration panel.",
@@ -89,16 +68,8 @@ export function getOverlayDisplayDuration(): number {
     return Math.max(value, MIN_OVERLAY_DURATION_MS);
 }
 
-export function getOverlaySetupLayout(): OverlaySetupLayout {
-    return normalizeSetupLayout(game.settings!.get(MODULE_ID, "setupLayout"));
-}
-
 export function isCleanRollConfigurationDialogEnabled(): boolean {
     return Boolean(
         game.settings!.get(MODULE_ID, "cleanRollConfigurationDialog")
     );
-}
-
-function normalizeSetupLayout(value: unknown): OverlaySetupLayout {
-    return value === "panel" ? "panel" : "card";
 }

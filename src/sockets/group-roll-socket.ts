@@ -22,7 +22,6 @@ type GroupStartPayload = {
 
 type GroupParticipantPayload = {
     uuid: string;
-    userId: string | null;
     name: string;
     img: string;
 };
@@ -96,7 +95,6 @@ function handleGroupSocketMessage(message: GroupSocketMessage) {
 
 function onGroupStart(payload: GroupStartPayload) {
     const isGm = !!game.user?.isGM;
-    const userId = game.user?.id ?? null;
 
     const data: GroupRollOverlayData = {
         groupId: payload.groupId,
@@ -105,7 +103,7 @@ function onGroupStart(payload: GroupStartPayload) {
         isGm,
         participants: payload.participants.map((p) => ({
             uuid: p.uuid,
-            userId: p.userId,
+            userId: null,
             name: p.name,
             img: p.img,
             status: "setup",
@@ -116,17 +114,32 @@ function onGroupStart(payload: GroupStartPayload) {
 
     if (isGm) return;
 
-    const mine = payload.participants.filter((p) => p.userId === userId);
-    for (const participant of mine) {
-        void openSoloSetupForGroupParticipant(payload, participant);
+    for (const participant of payload.participants) {
+        void openSoloSetupIfOwned(payload, participant);
     }
 }
 
-async function openSoloSetupForGroupParticipant(
+async function openSoloSetupIfOwned(
     payload: GroupStartPayload,
     participant: GroupParticipantPayload
 ) {
     try {
+        const actor = (await safeFromUuid(participant.uuid)) as
+            | (Actor & {
+                  isOwner?: boolean;
+                  system?: { skills?: unknown };
+              })
+            | null;
+
+        if (!actor) {
+            warn("Group roll: actor not found locally", participant.uuid);
+            return;
+        }
+        if (!actor.isOwner) return;
+        if (game.user?.isGM) return;
+
+        const skillOptions = buildSkillOptionsForActor(actor);
+
         const result = await requestPowerRollSetup({
             title: payload.title,
             rollType: payload.rollType,
@@ -135,13 +148,11 @@ async function openSoloSetupForGroupParticipant(
             modifiers: { edges: 0, banes: 0, bonuses: 0 },
             messageMode: "public",
             skill: null,
-            skillOptions: [],
+            skillOptions,
             skillModifiers: {},
         });
 
-        if (!result) {
-            return;
-        }
+        if (!result) return;
 
         const config = promptResultToConfig(result);
         emitGroup({
@@ -155,6 +166,49 @@ async function openSoloSetupForGroupParticipant(
     } catch (err) {
         warn("Failed to open group roll setup for participant", err);
     }
+}
+
+function buildSkillOptionsForActor(actor: {
+    system?: { skills?: unknown };
+}): { value: string; label: string; group?: string }[] {
+    const skills = actor?.system?.skills;
+    const values = collectSkillValues(skills);
+    if (!values.length) return [];
+
+    const list = (globalThis as any).ds?.CONFIG?.skills?.list ?? {};
+    const groups = (globalThis as any).ds?.CONFIG?.skills?.groups ?? {};
+
+    return values.map((value) => {
+        const skill = list[value];
+        const groupKey = skill?.group;
+        const label =
+            typeof skill?.label === "string"
+                ? localizeMaybe(skill.label)
+                : value;
+        const group = groupKey
+            ? localizeMaybe(groups[groupKey]?.label ?? groupKey)
+            : undefined;
+        return { value, label, group };
+    });
+}
+
+function collectSkillValues(skills: unknown): string[] {
+    if (!skills) return [];
+    if (skills instanceof Set) return Array.from(skills).map(String);
+    if (Array.isArray(skills)) return skills.map(String);
+    if (typeof (skills as any).values === "function") {
+        try {
+            return Array.from((skills as any).values()).map(String);
+        } catch {
+            // fall through
+        }
+    }
+    if (typeof skills === "object") return Object.keys(skills);
+    return [];
+}
+
+function localizeMaybe(label: string): string {
+    return game.i18n?.has?.(label) ? game.i18n.localize(label) : label;
 }
 
 function promptResultToConfig(

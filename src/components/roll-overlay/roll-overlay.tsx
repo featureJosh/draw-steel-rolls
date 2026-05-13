@@ -1,9 +1,3 @@
-import { MODULE_ID } from "@/config/constants";
-import { useHookEvent } from "@/hooks/use-hook-event";
-import {
-    getOverlaySetupLayout,
-    OverlaySetupLayout,
-} from "@/settings/overlay";
 import { isDebugModeEnabled } from "@/settings/debug-mode";
 import {
     DrawSteelRollOverlayData,
@@ -45,14 +39,9 @@ export const RollOverlay: React.FC = () => {
     };
 
     const [phase, setPhase] = useState<"hidden" | "visible">("hidden");
-    const [setupLayout, setSetupLayout] =
-        useState<OverlaySetupLayout>(getOverlaySetupLayout());
     const [reservePanelSetupSlot, setReservePanelSetupSlot] = useState(false);
 
-    useHookEvent(`${MODULE_ID}.setupLayout`, setSetupLayout);
-
-    const usesPanelSetup =
-        !!current && isSetupOverlay(current) && setupLayout === "panel";
+    const usesPanelSetup = !!current && isSetupOverlay(current);
     const hasLowerOverlay = !!current && (usesPanelSetup || isResultOverlay(current));
 
     const {

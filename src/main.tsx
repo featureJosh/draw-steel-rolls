@@ -9,9 +9,12 @@ import { setupPowerRollDialogOverride } from "./overrides/power-roll-dialog";
 import { registerSettings } from "./settings/_register-settings";
 import { setupGroupRollSocket } from "./sockets/group-roll-socket";
 
+// Register the socketlib.ready listener at module load time so we never miss
+// the hook regardless of module load order.
+setupGroupRollSocket();
+
 Hooks.once("init", () => {
     registerSettings();
-    setupGroupRollSocket();
 });
 
 Hooks.once("ready", () => {

@@ -162,6 +162,30 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
                     </button>
                 </div>
 
+                {hasSkills && (
+                    <label className="dsr-skill-row">
+                        <span className="dsr-skill-row__icon">
+                            <i className="fa-solid fa-star" />
+                        </span>
+                        <span className="dsr-skill-row__label">Skill</span>
+                        <select
+                            className="dsr-skill-row__select"
+                            value={data.skill ?? ""}
+                            disabled={disabled}
+                            onChange={(event) => setSkill(event.target.value || null)}
+                        >
+                            <option value="">None</option>
+                            {data.skillOptions.map((skill) => (
+                                <option key={skill.value} value={skill.value}>
+                                    {skill.group
+                                        ? `${skill.group}: ${skill.label}`
+                                        : skill.label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                )}
+
                 <div className="dsr-vis-row">
                     {modes.map((mode) => (
                         <button
@@ -186,30 +210,6 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
                     <i className="fa-regular fa-computer-mouse-button-right" /> Right click to decrease
                 </p>
             </div>
-
-            {hasSkills && (
-                <label className="dsr-skill-row">
-                    <span className="dsr-skill-row__icon">
-                        <i className="fa-solid fa-star" />
-                    </span>
-                    <span className="dsr-skill-row__label">Skill</span>
-                    <select
-                        className="dsr-skill-row__select"
-                        value={data.skill ?? ""}
-                        disabled={disabled}
-                        onChange={(event) => setSkill(event.target.value || null)}
-                    >
-                        <option value="">None</option>
-                        {data.skillOptions.map((skill) => (
-                            <option key={skill.value} value={skill.value}>
-                                {skill.group
-                                    ? `${skill.group}: ${skill.label}`
-                                    : skill.label}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-            )}
 
             <button
                 type="button"

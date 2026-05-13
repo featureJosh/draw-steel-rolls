@@ -24,6 +24,8 @@ type GroupParticipantPayload = {
     uuid: string;
     name: string;
     img: string;
+    /** Player user id for this hero when known; used to route setup on clients. */
+    userId: string | null;
 };
 
 type GroupReadyPayload = {
@@ -103,7 +105,7 @@ function onGroupStart(payload: GroupStartPayload) {
         isGm,
         participants: payload.participants.map((p) => ({
             uuid: p.uuid,
-            userId: null,
+            userId: p.userId,
             name: p.name,
             img: p.img,
             status: "setup",
@@ -114,7 +116,15 @@ function onGroupStart(payload: GroupStartPayload) {
 
     if (isGm) return;
 
+    const myUserId = game.user?.id;
     for (const participant of payload.participants) {
+        if (
+            participant.userId != null &&
+            myUserId != null &&
+            participant.userId !== myUserId
+        ) {
+            continue;
+        }
         void openSoloSetupIfOwned(payload, participant);
     }
 }

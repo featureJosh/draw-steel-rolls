@@ -16,6 +16,8 @@ export interface GroupRollHeroInput {
     uuid: string;
     name: string;
     img: string;
+    /** If omitted, the GM client infers a default player owner from the actor. */
+    userId?: string | null;
 }
 
 export type GroupRollResult = GroupParticipantFinalResult;
@@ -38,6 +40,7 @@ export async function groupRoll(
         uuid: hero.uuid,
         name: hero.name,
         img: hero.img,
+        userId: hero.userId ?? resolveDefaultOwnerUserId(hero.uuid),
     }));
 
     return new Promise<GroupRollResult[]>((resolve) => {
@@ -52,4 +55,23 @@ export async function groupRoll(
             },
         });
     });
+}
+
+function resolveDefaultOwnerUserId(actorUuid: string): string | null {
+    try {
+        const doc = fromUuidSync(actorUuid);
+        const actor = doc as Actor | null;
+        if (!actor || actor.documentName !== "Actor") return null;
+        const ownership = actor.ownership;
+        if (!ownership) return null;
+        const ownerLevel = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+        for (const user of game.users ?? []) {
+            if (user.isGM) continue;
+            const level = ownership[user.id];
+            if (typeof level === "number" && level >= ownerLevel) return user.id;
+        }
+        return null;
+    } catch {
+        return null;
+    }
 }

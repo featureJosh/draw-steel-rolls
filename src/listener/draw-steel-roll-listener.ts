@@ -9,7 +9,7 @@ import { warn } from "@/utils/logging";
 
 function isGroupRollMessage(message: ChatMessage): boolean {
     const flags = (message as any).flags?.[MODULE_ID];
-    return !!flags?.groupRollId;
+    return !!flags?.groupRollId || !!flags?.soloRollRequest;
 }
 
 const animatedRolls = new Set<string>();

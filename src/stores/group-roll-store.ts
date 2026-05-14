@@ -13,6 +13,7 @@ export interface GroupParticipantConfig {
     skill: string | null;
     messageMode: string;
     difficulty?: string | null;
+    characteristic?: string | null;
 }
 
 export interface GroupRollDieView {

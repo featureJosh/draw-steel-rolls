@@ -1,0 +1,226 @@
+.dsr-request-roll {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    font-family: var(--font-primary, sans-serif);
+}
+
+/* Drop zone */
+.dsr-drop-zone {
+    min-height: 120px;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    cursor: default;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.dsr-drop-zone--hover {
+    border-color: rgba(255, 165, 0, 0.6);
+    background: rgba(255, 165, 0, 0.06);
+}
+
+.dsr-drop-zone__icon {
+    font-size: 24px;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.dsr-drop-zone__label {
+    font-size: 13px;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Hero list (shown inside drop zone when heroes exist) */
+.dsr-hero-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dsr-hero-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dsr-hero-row__img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+}
+
+.dsr-hero-row__name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dsr-hero-row__remove {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s, border-color 0.15s, background 0.15s;
+    font-size: 12px;
+}
+
+.dsr-hero-row__remove:hover {
+    opacity: 1;
+    border-color: rgba(239, 68, 68, 0.6);
+    background: rgba(239, 68, 68, 0.12);
+    color: rgb(252, 165, 165);
+}
+
+/* "Drop another hero" hint at bottom of filled list */
+.dsr-drop-zone__add {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 4px 0;
+    font-size: 12px;
+    opacity: 0.35;
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    transition: opacity 0.15s;
+    pointer-events: none;
+}
+
+.dsr-drop-zone__add--hover {
+    opacity: 0.7;
+}
+
+/* Config row (characteristic + skill) */
+.dsr-config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.dsr-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dsr-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.55;
+}
+
+.dsr-label__optional {
+    font-weight: 400;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 0.7;
+}
+
+.dsr-select {
+    width: 100%;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.35);
+    color: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: auto;
+}
+
+.dsr-select:focus {
+    outline: none;
+    border-color: rgba(255, 165, 0, 0.5);
+}
+
+.dsr-select option,
+.dsr-select optgroup {
+    background: #1a1a1a;
+    color: #ddd;
+}
+
+/* Action buttons */
+.dsr-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.dsr-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+    border: 1px solid transparent;
+}
+
+.dsr-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.dsr-btn--primary {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 165, 0, 0.5);
+    color: rgb(255, 220, 150);
+}
+
+.dsr-btn--primary:not(:disabled):hover {
+    background: rgba(255, 165, 0, 0.12);
+    border-color: rgba(255, 165, 0, 0.75);
+}
+
+.dsr-btn--secondary {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.dsr-btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+}

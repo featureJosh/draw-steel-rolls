@@ -28,6 +28,11 @@ export interface PowerRollDifficultyOption {
     label: string;
 }
 
+export interface CharacteristicOption {
+    value: string;
+    label: string;
+}
+
 export interface PowerRollSetupPrompt {
     id: string;
     title: string;
@@ -41,6 +46,8 @@ export interface PowerRollSetupPrompt {
     skillModifiers: Record<string, PowerRollSkillModifier>;
     difficulty?: string | null;
     difficultyOptions?: PowerRollDifficultyOption[];
+    characteristic?: string | null;
+    characteristicOptions?: CharacteristicOption[];
 }
 
 export interface PowerRollPromptResult {
@@ -48,6 +55,7 @@ export interface PowerRollPromptResult {
     skill: string | null;
     messageMode: string;
     difficulty: string | null;
+    characteristic: string | null;
 }
 
 export interface DrawSteelRollDieView {
@@ -73,6 +81,8 @@ export interface DrawSteelRollSetupOverlayData extends OverlayBase {
     skillModifiers: Record<string, PowerRollSkillModifier>;
     difficulty?: string | null;
     difficultyOptions?: PowerRollDifficultyOption[];
+    characteristic?: string | null;
+    characteristicOptions?: CharacteristicOption[];
 }
 
 export interface DrawSteelRollResultOverlayData extends OverlayBase {
@@ -115,6 +125,7 @@ interface RollOverlayState {
     beginSetup: (prompt: PowerRollSetupPrompt) => void;
     adjustSetupModifier: (key: keyof PowerRollModifiers, delta: number) => void;
     setSetupSkill: (skill: string | null) => void;
+    setSetupCharacteristic: (characteristic: string | null) => void;
     setSetupMessageMode: (messageMode: string) => void;
     setSetupDifficulty: (difficulty: string | null) => void;
     submitSetup: () => void;
@@ -225,6 +236,14 @@ export const useRollOverlayStore = create<RollOverlayState>((set, get) => ({
         });
     },
 
+    setSetupCharacteristic: (characteristic) => {
+        set((state) => {
+            const current = state.current;
+            if (!current || current.phase !== "setup") return state;
+            return { current: { ...current, characteristic: characteristic || null } };
+        });
+    },
+
     setSetupMessageMode: (messageMode) => {
         set((state) => {
             const current = state.current;
@@ -262,6 +281,7 @@ export const useRollOverlayStore = create<RollOverlayState>((set, get) => ({
             skill: current.skill || null,
             messageMode: current.messageMode ?? getDefaultMessageMode(),
             difficulty: current.difficulty ?? null,
+            characteristic: current.characteristic ?? null,
         };
 
         const prompt = activePrompt;

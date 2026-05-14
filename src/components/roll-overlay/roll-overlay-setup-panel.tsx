@@ -41,6 +41,7 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
 
     const adjustModifier = useRollOverlayStore((s) => s.adjustSetupModifier);
     const setSkill = useRollOverlayStore((s) => s.setSetupSkill);
+    const setCharacteristic = useRollOverlayStore((s) => s.setSetupCharacteristic);
     const setMessageMode = useRollOverlayStore((s) => s.setSetupMessageMode);
     const setDifficulty = useRollOverlayStore((s) => s.setSetupDifficulty);
     const submitSetup = useRollOverlayStore((s) => s.submitSetup);
@@ -62,6 +63,8 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
     const hasSkills = data.skillOptions.length > 0;
     const difficultyOptions = data.difficultyOptions ?? [];
     const hasDifficulty = difficultyOptions.length > 0;
+    const characteristicOptions = data.characteristicOptions ?? [];
+    const hasCharacteristics = characteristicOptions.length > 0;
 
     return (
         <div
@@ -180,6 +183,30 @@ export const RollOverlaySetupPanel: React.FC<RollOverlaySetupPanelProps> = ({
                             }
                         >
                             {difficultyOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                )}
+
+                {hasCharacteristics && (
+                    <label className="dsr-skill-row">
+                        <span className="dsr-skill-row__icon">
+                            <i className="fa-solid fa-diamond" />
+                        </span>
+                        <span className="dsr-skill-row__label">Characteristic</span>
+                        <select
+                            className="dsr-skill-row__select"
+                            value={data.characteristic ?? ""}
+                            disabled={disabled}
+                            onChange={(event) =>
+                                setCharacteristic(event.target.value || null)
+                            }
+                        >
+                            <option value="">None</option>
+                            {characteristicOptions.map((opt) => (
                                 <option key={opt.value} value={opt.value}>
                                     {opt.label}
                                 </option>

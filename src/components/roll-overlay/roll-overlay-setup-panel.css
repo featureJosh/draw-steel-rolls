@@ -215,7 +215,6 @@
 .dsr-skill-row {
     display: flex;
     align-items: center;
-    gap: 8px;
     margin-top: 8px;
     height: 32px;
     padding: 0 10px;
@@ -240,6 +239,7 @@
     font-weight: 700;
     border: none;
     outline: none;
+    color-scheme: dark;
 }
 
 /* === Visibility row === */

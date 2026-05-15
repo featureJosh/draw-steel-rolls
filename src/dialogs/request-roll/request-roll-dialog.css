@@ -161,6 +161,7 @@
     font-size: 13px;
     cursor: pointer;
     appearance: auto;
+    color-scheme: dark;
 }
 
 .dsr-select:focus {

@@ -46,7 +46,7 @@ export async function groupRoll(
 
     debug("Group roll requested", {
         groupId,
-        title: input.title || "Group Roll",
+        title: input.title || "Power Roll",
         participants: participants.map((participant) => ({
             uuid: participant.uuid,
             name: participant.name,
@@ -56,7 +56,7 @@ export async function groupRoll(
 
     const payload: GroupStartPayload = {
         groupId,
-        title: input.title || "Group Roll",
+        title: input.title || "Power Roll",
         rollType: "Test",
         participants,
         metadata: input.metadata as any,

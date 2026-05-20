@@ -119,7 +119,7 @@ export const GroupRollOverlay: React.FC = () => {
                         className="pointer-events-auto absolute right-4 top-4 z-[30] flex h-10 w-10 items-center justify-center rounded-[3px] border border-white/25 bg-black/60 text-white/75 transition hover:border-white/50 hover:bg-white/10 hover:text-white"
                         onClick={closeGroupRollOverlay}
                         data-tooltip="Close"
-                        aria-label="Close Group Roll"
+                        aria-label="Close"
                     >
                         <i className="fa-solid fa-xmark" />
                     </button>
@@ -175,7 +175,7 @@ const GroupRollMainCard: React.FC<{
                     {data.title}
                 </div>
                 <div className="w-[220px] absolute font-semibold text-[13px] uppercase tracking-normal left-1/2 top-[124px] -translate-x-1/2 -translate-y-1/2 opacity-80">
-                    Group Roll
+                    Power Roll
                 </div>
                 <div className="absolute left-1/2 top-[176px] -translate-x-1/2 -translate-y-1/2">
                     <div className="font-black text-[52px] leading-none">
@@ -420,15 +420,15 @@ const GroupRollControls: React.FC<{
                 disabled={!enabled || done}
             >
                 <span className="text-[12px]">◆</span>
-                {done ? "Resolved" : "Group Roll"}
+                {done ? "Resolved" : "Roll"}
             </button>
             {!done && (
                 <button
                     type="button"
                     className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-[3px] border border-white/22 bg-black/52 text-[15px] text-white/75 transition hover:border-rose-300/60 hover:bg-rose-500/15 hover:text-rose-100"
                     onClick={onCancel}
-                    data-tooltip="Cancel Group Roll"
-                    aria-label="Cancel Group Roll"
+                    data-tooltip="Cancel Roll"
+                    aria-label="Cancel Roll"
                 >
                     <i className="fa-solid fa-xmark" />
                 </button>

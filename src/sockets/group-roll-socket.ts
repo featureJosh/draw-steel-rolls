@@ -803,7 +803,7 @@ async function rollParticipant(
                     actorUuid: uuid,
                 },
             },
-            flavor: `${groupTitle} — Group Roll`,
+            flavor: `${groupTitle} — Roll`,
         } as any);
         messageId = (message as any)?.id ?? null;
     } catch (err) {

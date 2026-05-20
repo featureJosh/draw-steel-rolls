@@ -354,10 +354,27 @@ export async function requestPowerRollSetup(
 
     return new Promise((resolve) => {
         activePrompt = { id, resolve };
+        const normalizedModifiers = normalizeModifiers(prompt.modifiers);
+        if (prompt.skill) {
+            normalizedModifiers.bonuses += 2;
+            const skillMod = prompt.skillModifiers[prompt.skill];
+            if (skillMod) {
+                normalizedModifiers.edges = clampInteger(
+                    normalizedModifiers.edges + (skillMod.edges ?? 0),
+                    EDGE_BANE_MIN,
+                    EDGE_BANE_MAX
+                );
+                normalizedModifiers.banes = clampInteger(
+                    normalizedModifiers.banes + (skillMod.banes ?? 0),
+                    EDGE_BANE_MIN,
+                    EDGE_BANE_MAX
+                );
+            }
+        }
         useRollOverlayStore.getState().beginSetup({
             ...prompt,
             id,
-            modifiers: normalizeModifiers(prompt.modifiers),
+            modifiers: normalizedModifiers,
             messageMode: normalizeMessageMode(prompt.messageMode),
         });
     });

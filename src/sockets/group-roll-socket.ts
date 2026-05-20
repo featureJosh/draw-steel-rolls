@@ -744,6 +744,77 @@ export function cancelGroupRoll(groupId: string) {
     broadcastGroupRollCancel({ groupId });
 }
 
+export async function rollForParticipant(
+    groupId: string,
+    participant: { uuid: string; name: string; img: string }
+): Promise<void> {
+    if (!game.user?.isGM) return;
+
+    const startPayload = activeGroupStarts.get(groupId);
+    if (!startPayload) {
+        warn("rollForParticipant: no active group start found", groupId);
+        return;
+    }
+
+    const actor = (await safeFromUuid(participant.uuid)) as
+        | (Actor & { system?: { skills?: any } })
+        | null;
+
+    const isMontage = startPayload.metadata?.feature === "montage";
+    const difficultyOptions = isMontage ? MONTAGE_DIFFICULTY_OPTIONS : undefined;
+    const initialDifficulty = isMontage
+        ? typeof startPayload.metadata?.difficulty === "string"
+            ? startPayload.metadata.difficulty
+            : "medium"
+        : null;
+
+    const lockedSkill =
+        typeof startPayload.metadata?.skill === "string"
+            ? startPayload.metadata.skill
+            : null;
+    const skillOptions = lockedSkill
+        ? buildSkillOptionForKey(lockedSkill)
+        : actor
+        ? buildSkillOptionsForActor(actor)
+        : [];
+
+    const charKey =
+        typeof startPayload.metadata?.characteristic === "string"
+            ? startPayload.metadata.characteristic
+            : null;
+    const rollType = charKey
+        ? buildCharacteristicLabel(charKey) + " Test"
+        : startPayload.rollType;
+
+    const characteristicOptions = buildCharacteristicOptions();
+
+    const result = await requestPowerRollSetup({
+        title: startPayload.title,
+        rollType,
+        actorName: participant.name,
+        formula: "2d10",
+        modifiers: { edges: 0, banes: 0, bonuses: 0 },
+        messageMode: "public",
+        skill: lockedSkill,
+        skillOptions,
+        skillModifiers: {},
+        difficulty: initialDifficulty,
+        difficultyOptions,
+        characteristic: charKey,
+        characteristicOptions,
+    });
+
+    if (!result) return;
+
+    const config = promptResultToConfig(result);
+    closeSubmittedPowerRollSetup();
+    broadcastGroupRollReady({
+        groupId,
+        actorUuid: participant.uuid,
+        config,
+    });
+}
+
 export function closeGroupRollOverlay() {
     useGroupRollStore.getState().hide();
     window.setTimeout(() => useGroupRollStore.getState().clear(), 500);

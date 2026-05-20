@@ -6,6 +6,7 @@ import {
     cancelGroupRoll,
     closeGroupRollOverlay,
     rollAllParticipants,
+    rollForParticipant,
 } from "@/sockets/group-roll-socket";
 import {
     allParticipantsReady,
@@ -133,6 +134,8 @@ export const GroupRollOverlay: React.FC = () => {
                             <GroupRollPlayerCard
                                 key={participant.uuid}
                                 participant={participant}
+                                groupId={current.groupId}
+                                isGm={current.isGm}
                             />
                         ))}
                     </div>
@@ -196,9 +199,11 @@ const GroupRollMainCard: React.FC<{
     );
 };
 
-const GroupRollPlayerCard: React.FC<{ participant: GroupParticipant }> = ({
-    participant,
-}) => {
+const GroupRollPlayerCard: React.FC<{
+    participant: GroupParticipant;
+    groupId: string;
+    isGm: boolean;
+}> = ({ participant, groupId, isGm }) => {
     const [color, setColor] = useState<string | undefined>(
         game.settings!.get(MODULE_ID, "border-color") ?? "#ffffff"
     );
@@ -261,6 +266,25 @@ const GroupRollPlayerCard: React.FC<{ participant: GroupParticipant }> = ({
                     tier={result?.tier}
                 />
             </div>
+
+            {isGm && participant.status === "setup" && (
+                <button
+                    type="button"
+                    className="pointer-events-auto flex h-6 items-center justify-center gap-1 rounded-[3px] border border-amber-300/50 bg-amber-500/15 px-2 text-[10px] font-black uppercase tracking-[0.14em] text-amber-100 transition hover:border-amber-300/80 hover:bg-amber-500/30"
+                    onClick={() =>
+                        void rollForParticipant(groupId, {
+                            uuid: participant.uuid,
+                            name: participant.name,
+                            img: participant.img,
+                        })
+                    }
+                    data-tooltip={`Roll for ${participant.name}`}
+                    aria-label={`Roll for ${participant.name}`}
+                >
+                    <i className="fa-solid fa-dice" />
+                    Roll for player
+                </button>
+            )}
 
             <div className="max-w-full truncate text-center text-[16px] font-bold leading-none text-white z-[12]">
                 {participant.name}

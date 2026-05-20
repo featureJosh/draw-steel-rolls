@@ -77,11 +77,15 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
             </div>
 
             <div className="flex h-5 items-center justify-center">
-                <BoonLabel
-                    netBoon={data.netBoon}
-                    hidden={hidden}
-                    isVisible={resultsRevealed}
-                />
+                {resultsRevealed && !hidden && data.product != null ? (
+                    <TierBadge tier={data.product} isCritical={data.isCritical} />
+                ) : (
+                    <BoonLabel
+                        netBoon={data.netBoon}
+                        hidden={hidden}
+                        isVisible={resultsRevealed}
+                    />
+                )}
             </div>
 
             <div className="max-w-full truncate text-center text-[16px] font-bold leading-none text-white z-[12]">
@@ -143,6 +147,27 @@ export const RollOverlayPlayerRoll: React.FC<RollOverlayPlayerRollProps> = ({
             >
                 {hidden ? "?? + ?? = ??" : formatRollFormula(data)}
             </div>
+        </div>
+    );
+};
+
+const TierBadge: React.FC<{ tier: number; isCritical: boolean }> = ({ tier, isCritical }) => {
+    const tone =
+        tier === 3
+            ? "border-emerald-300/70 bg-emerald-500/20 text-emerald-100"
+            : tier === 2
+            ? "border-amber-300/70 bg-amber-500/20 text-amber-100"
+            : "border-rose-300/70 bg-rose-500/20 text-rose-100";
+
+    return (
+        <div
+            className={cn(
+                "z-[14] flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[11px] font-black uppercase leading-none tracking-normal shadow-[0_4px_12px_rgba(0,0,0,0.35)]",
+                tone
+            )}
+        >
+            <span className="h-2 w-2 rounded-full bg-white/80" />
+            <span>{isCritical ? `Critical Tier ${tier}` : `Tier ${tier}`}</span>
         </div>
     );
 };

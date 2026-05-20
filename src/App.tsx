@@ -5,8 +5,8 @@ import "./index.css";
 export const App = () => {
     return (
         <div className="draw-steel-rolls-react tw">
-            <RollOverlay />
             <GroupRollOverlay />
+            <RollOverlay />
         </div>
     );
 };

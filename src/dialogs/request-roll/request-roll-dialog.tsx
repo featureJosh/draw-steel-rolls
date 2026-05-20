@@ -1,7 +1,6 @@
 import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { groupRoll } from "@/api/group-roll";
-import { requestSoloRoll } from "@/sockets/group-roll-socket";
 import { RequestRollDialogContent, type RollRequestConfig } from "./RequestRollDialogContent";
 import "./request-roll-dialog.css";
 
@@ -73,22 +72,14 @@ class RequestRollDialogClass extends BaseClass {
     #handleSubmit = (config: RollRequestConfig): void => {
         void this.close();
         const title = buildRollTitle(config.characteristic);
-        if (config.heroes.length === 1) {
-            void requestSoloRoll(config.heroes[0], {
-                title,
-                characteristic: config.characteristic,
-                skill: config.skill,
-            });
-        } else {
-            void groupRoll({
-                title,
-                heroes: config.heroes,
-                metadata: {
-                    characteristic: config.characteristic ?? undefined,
-                    skill: config.skill ?? undefined,
-                },
-            });
-        }
+        void groupRoll({
+            title,
+            heroes: config.heroes,
+            metadata: {
+                characteristic: config.characteristic ?? undefined,
+                skill: config.skill ?? undefined,
+            },
+        });
     };
 }
 

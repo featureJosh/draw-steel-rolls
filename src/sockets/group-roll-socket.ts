@@ -9,7 +9,6 @@ import {
 import {
     PowerRollPromptResult,
     requestPowerRollSetup,
-    showRollOverlay,
     useRollOverlayStore,
 } from "@/stores/roll-overlay-store";
 import { error, info, warn } from "@/utils/logging";
@@ -62,15 +61,6 @@ type SocketlibSocket = {
     executeForUsers: (userIds: string[], name: string, ...args: any[]) => Promise<unknown>;
 };
 
-export interface SoloRollRequestPayload {
-    uuid: string;
-    name: string;
-    img: string;
-    title: string;
-    characteristic: string | null;
-    skill: string | null;
-}
-
 let socket: SocketlibSocket | undefined;
 
 const groupResultResolvers = new Map<
@@ -119,7 +109,6 @@ function registerSocketlibHandlers() {
         socket.register("groupRoll:participantRolling", handleGroupParticipantRolling);
         socket.register("groupRoll:participantResolved", handleGroupParticipantResolved);
         socket.register("groupRoll:cancel", handleGroupRollCancel);
-        socket.register("soloRollRequest:start", handleSoloRollStart);
         info("socketlib group roll handlers registered", {
             userId: game.user?.id,
             isGm: game.user?.isGM,
@@ -157,166 +146,6 @@ function ensureSocket(): SocketlibSocket | null {
     }
     error("Group roll socket not ready; message dropped.");
     return null;
-}
-
-export interface SoloRollOptions {
-    title?: string;
-    characteristic?: string | null;
-    skill?: string | null;
-}
-
-export async function requestSoloRoll(
-    hero: { uuid: string; name: string; img: string },
-    options: SoloRollOptions = {}
-): Promise<void> {
-    if (!game.user?.isGM) {
-        warn("requestSoloRoll() must be invoked by the GM client.");
-        return;
-    }
-
-    const ownerUserId = resolveOwnerUserId(hero.uuid);
-    if (!ownerUserId) {
-        warn("requestSoloRoll: no non-GM owner found for actor", hero.uuid);
-        return;
-    }
-
-    const payload: SoloRollRequestPayload = {
-        uuid: hero.uuid,
-        name: hero.name,
-        img: hero.img,
-        title: options.title ?? "Request Roll",
-        characteristic: options.characteristic ?? null,
-        skill: options.skill ?? null,
-    };
-    const s = ensureSocket();
-    if (!s) return;
-
-    info("[SEND] soloRollRequest:start", { uuid: hero.uuid, ownerUserId, characteristic: payload.characteristic, skill: payload.skill });
-    // executeForEveryone is the proven pattern; each client self-filters via ownership check.
-    Promise.resolve(s.executeForEveryone("soloRollRequest:start", payload)).catch((err) =>
-        error("executeForEveryone soloRollRequest:start failed", err)
-    );
-}
-
-async function handleSoloRollStart(payload: SoloRollRequestPayload) {
-    if (game.user?.isGM) return;
-
-    const actor = (await safeFromUuid(payload.uuid)) as
-        | (Actor & { system?: { skills?: unknown }; img?: string | null })
-        | null;
-    if (!actor) {
-        warn("soloRollRequest: actor not found", payload.uuid);
-        return;
-    }
-
-    const hasOwner = game.user ? actor.testUserPermission(game.user, "OWNER") : false;
-    if (!hasOwner) return;
-
-    info("[RECV] soloRollRequest:start", { uuid: payload.uuid, actorName: actor.name });
-
-    // Skill: if the GM specified one, lock the player to it; otherwise show their trained skills.
-    const lockedSkill = payload.skill ?? null;
-    const skillOptions = lockedSkill
-        ? buildSkillOptionForKey(lockedSkill)
-        : buildSkillOptionsForActor(actor);
-
-    const characteristicOptions = buildCharacteristicOptions();
-    const rollType = payload.characteristic
-        ? buildCharacteristicLabel(payload.characteristic) + " Test"
-        : "Test";
-
-    const result = await requestPowerRollSetup({
-        title: payload.title,
-        rollType,
-        actorName: payload.name,
-        formula: "2d10",
-        modifiers: { edges: 0, banes: 0, bonuses: 0 },
-        messageMode: "public",
-        skill: lockedSkill,
-        skillOptions,
-        skillModifiers: {},
-        characteristic: payload.characteristic,
-        characteristicOptions,
-    });
-
-    if (!result) return;
-
-    const modifiers = result.rolls[0];
-    // Use the characteristic the player confirmed in the setup panel.
-    const resolvedChar = result.characteristic ?? payload.characteristic;
-    const charBonus = resolvedChar
-        ? getCharacteristicBonus(actor, resolvedChar)
-        : 0;
-    const modifier =
-        charBonus +
-        toInt(modifiers.bonuses) +
-        2 * toInt(modifiers.edges) -
-        2 * toInt(modifiers.banes);
-
-    const formula =
-        modifier === 0
-            ? "2d10"
-            : `2d10 ${modifier >= 0 ? "+" : "-"} ${Math.abs(modifier)}`;
-
-    const roll = await new Roll(formula).evaluate({ async: true } as any);
-
-    const dieTerm = roll.dice.find((d: any) => Number(d.faces) === 10);
-    const dice = (dieTerm?.results ?? []).map((r: any) => ({
-        value: Number(r.result ?? 0),
-        active: r.active !== false,
-    }));
-
-    const total = Number(roll.total ?? 0);
-    const naturalResult = dice.reduce(
-        (sum: number, d: { value: number; active: boolean }) =>
-            sum + (d.active ? d.value : 0),
-        0
-    );
-    const netBoon = toInt(modifiers.edges) - toInt(modifiers.banes);
-    const tier = computeTier(total);
-
-    const speaker = ChatMessage.getSpeaker({ actor: actor as Actor });
-
-    let messageId: string | null = null;
-    try {
-        const message = await ChatMessage.create({
-            speaker,
-            rolls: [roll],
-            flags: { [MODULE_ID]: { soloRollRequest: true } },
-            flavor: `${payload.title} — Test`,
-        } as any);
-        messageId = (message as any)?.id ?? null;
-    } catch (err) {
-        warn("Failed to create solo roll request chat message", err);
-    }
-
-    if (messageId) await waitForDice(messageId);
-
-    await showRollOverlay({
-        id: foundry.utils.randomID(),
-        title: payload.title,
-        rollType: "Test",
-        actorName: payload.name,
-        formula: formatRollFormula(dice, modifier, total),
-        messageId: messageId ?? "",
-        partId: "solo-request",
-        rollIndex: 0,
-        flavor: "Test",
-        actorImg: actor.img ?? undefined,
-        dice,
-        total,
-        naturalResult,
-        modifier,
-        tier: String(tier),
-        netBoon,
-        isCritical: false,
-        isNat20: false,
-        authorId: game.user?.id ?? null,
-        user: game.user!,
-        nativeRoll: roll,
-        visibility: result.messageMode === "gmroll" ? "obfuscated" : "visible",
-        speaker,
-    });
 }
 
 function buildCharacteristicOptions(): { value: string; label: string }[] {
@@ -368,25 +197,6 @@ function getCharacteristicBonus(
     if (typeof charData?.value === "number") return charData.value;
     if (typeof charData?.score === "number") return charData.score;
     return 0;
-}
-
-function resolveOwnerUserId(actorUuid: string): string | null {
-    try {
-        const doc = fromUuidSync(actorUuid);
-        const actor = doc as Actor | null;
-        if (!actor || actor.documentName !== "Actor") return null;
-        const ownership = actor.ownership;
-        if (!ownership) return null;
-        const ownerLevel = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-        for (const user of game.users ?? []) {
-            if (user.isGM) continue;
-            const level = ownership[user.id];
-            if (typeof level === "number" && level >= ownerLevel) return user.id;
-        }
-        return null;
-    } catch {
-        return null;
-    }
 }
 
 export function broadcastGroupRollStart(payload: GroupStartPayload) {

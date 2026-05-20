@@ -4,8 +4,6 @@ import { groupRoll } from "./api/group-roll";
 import { App } from "./App";
 import { MODULE_ID } from "./config/constants";
 import "./index.css";
-import { setupDrawSteelRollListener } from "./listener/draw-steel-roll-listener";
-import { setupPowerRollDialogOverride } from "./overrides/power-roll-dialog";
 import { registerSettings } from "./settings/_register-settings";
 import { setupGroupRollSocket } from "./sockets/group-roll-socket";
 import { setupSceneControls } from "./scene-controls";
@@ -28,9 +26,6 @@ Hooks.once("ready", () => {
             <App />
         </React.StrictMode>
     );
-
-    setupDrawSteelRollListener();
-    setupPowerRollDialogOverride();
 
     const module = game.modules?.get(MODULE_ID) as unknown as
         | { api?: Record<string, unknown> }

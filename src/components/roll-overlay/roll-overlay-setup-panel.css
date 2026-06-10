@@ -241,6 +241,13 @@
     outline: none;
     color-scheme: dark;
 }
+/* Windows renders the native option popup with system colors and ignores
+   color-scheme on transparent selects, causing white-on-white. Force colors. */
+.dsr-skill-row__select option,
+.dsr-skill-row__select optgroup {
+    background: #1a1a1a;
+    color: #ddd;
+}
 
 /* === Visibility row === */
 .dsr-vis-row {
